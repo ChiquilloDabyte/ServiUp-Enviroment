@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "741301175647",
+    "project_id": "serviup",
+    "storage_bucket": "serviup.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:741301175647:android:8eae00b182e51fd659a2ea",
+        "android_client_info": {
+          "package_name": "com.example.flutter_application_1"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "741301175647-mo486h4bh54ppmmi1fq658fsmrjcuitg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAjCvWx_3jiA4tIiwdSt1pNCpf5HvcvGDc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "741301175647-mo486h4bh54ppmmi1fq658fsmrjcuitg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:741301175647:android:0fe1a4f76554b1ab59a2ea",
+        "android_client_info": {
+          "package_name": "com.teamMaster.ServiUp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "741301175647-mo486h4bh54ppmmi1fq658fsmrjcuitg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAjCvWx_3jiA4tIiwdSt1pNCpf5HvcvGDc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "741301175647-mo486h4bh54ppmmi1fq658fsmrjcuitg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
