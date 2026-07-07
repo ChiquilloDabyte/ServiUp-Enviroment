@@ -2,18 +2,57 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
 
-    // This rule allows anyone with your Firestore database reference to view, edit,
-    // and delete all data in your Firestore database. It is useful for getting
-    // started, but it is configured to expire after 30 days because it
-    // leaves your app open to attackers. At that time, all client
-    // requests to your Firestore database will be denied.
-    //
-    // Make sure to write security rules for your app before that time, or else
-    // all client requests to your Firestore database will be denied until you Update
-    // your rules
-    match /{document=**} {
-      allow read, write: if request.time < timestamp.date(2026, 7, 11);
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isProvider() {
+      return isSignedIn() && userDoc().role == 'provider';
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if false;
+    }
+
+    match /service_requests/{requestId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.clientId == request.auth.uid
+        && request.resource.data.status == 'open';
+      allow update: if isSignedIn() && (
+        resource.data.clientId == request.auth.uid ||
+        (isProvider() && resource.data.acceptedProviderId == request.auth.uid)
+      );
+      allow delete: if false;
+    }
+
+    match /offers/{offerId} {
+      allow read: if isSignedIn();
+      allow create: if isProvider()
+        && request.resource.data.providerId == request.auth.uid
+        && request.resource.data.status == 'pending';
+      allow update: if isSignedIn() && (
+        resource.data.providerId == request.auth.uid ||
+        get(/databases/$(database)/documents/service_requests/$(resource.data.requestId)).data.clientId == request.auth.uid
+      );
+      allow delete: if false;
+    }
+
+    match /notifications/{notificationId} {
+      allow read, update: if isOwner(resource.data.userId);
+      allow create: if false;
+      allow delete: if false;
     }
   }
 }

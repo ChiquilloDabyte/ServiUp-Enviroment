@@ -1,32 +1,96 @@
-/**
- * Import function triggers from their respective submodules:
- *
- * import {onCall} from "firebase-functions/v2/https";
- * import {onDocumentWritten} from "firebase-functions/v2/firestore";
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
- */
-
 import {setGlobalOptions} from "firebase-functions";
-import {onRequest} from "firebase-functions/https";
+import {onDocumentCreated, onDocumentUpdated} from "firebase-functions/v2/firestore";
+import {getFirestore} from "firebase-admin/firestore";
+import {getMessaging} from "firebase-admin/messaging";
+import {initializeApp} from "firebase-admin/app";
 import * as logger from "firebase-functions/logger";
 
-// Start writing functions
-// https://firebase.google.com/docs/functions/typescript
-
-// For cost control, you can set the maximum number of containers that can be
-// running at the same time. This helps mitigate the impact of unexpected
-// traffic spikes by instead downgrading performance. This limit is a
-// per-function limit. You can override the limit for each function using the
-// `maxInstances` option in the function's options, e.g.
-// `onRequest({ maxInstances: 5 }, (req, res) => { ... })`.
-// NOTE: setGlobalOptions does not apply to functions using the v1 API. V1
-// functions should each use functions.runWith({ maxInstances: 10 }) instead.
-// In the v1 API, each function can only serve one request per container, so
-// this will be the maximum concurrent request count.
+initializeApp();
 setGlobalOptions({maxInstances: 10});
 
-// export const helloWorld = onRequest((request, response) => {
-//   logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
+const db = getFirestore();
+
+async function sendPush(
+  userId: string,
+  title: string,
+  body: string,
+  payload: Record<string, string>,
+) {
+  const userDoc = await db.collection("users").doc(userId).get();
+  const token = userDoc.data()?.fcmToken as string | undefined;
+  if (!token) {
+    logger.warn("No FCM token for user", {userId});
+    return;
+  }
+
+  await getMessaging().send({
+    token,
+    notification: {title, body},
+    data: payload,
+  });
+}
+
+async function createNotification(
+  userId: string,
+  type: string,
+  title: string,
+  body: string,
+  payload: Record<string, string>,
+) {
+  await db.collection("notifications").add({
+    userId,
+    type,
+    title,
+    body,
+    payload,
+    read: false,
+    createdAt: new Date(),
+  });
+}
+
+export const onOfferCreated = onDocumentCreated(
+  "offers/{offerId}",
+  async (event) => {
+    const offer = event.data?.data();
+    if (!offer) return;
+
+    const requestDoc = await db
+      .collection("service_requests")
+      .doc(offer.requestId as string)
+      .get();
+    const clientId = requestDoc.data()?.clientId as string | undefined;
+    if (!clientId) return;
+
+    const title = "Nueva oferta recibida";
+    const body = `Precio propuesto: $${offer.proposedPrice}`;
+    const payload = {
+      requestId: offer.requestId as string,
+      offerId: event.params.offerId,
+    };
+
+    await createNotification(clientId, "offer_created", title, body, payload);
+    await sendPush(clientId, title, body, payload);
+  },
+);
+
+export const onOfferAccepted = onDocumentUpdated(
+  "offers/{offerId}",
+  async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (!before || !after) return;
+    if (before.status === after.status) return;
+    if (after.status !== "accepted") return;
+
+    const providerId = after.providerId as string;
+    const title = "Oferta aceptada";
+    const body = "El cliente aceptó tu oferta.";
+    const payload = {
+      requestId: after.requestId as string,
+      offerId: event.params.offerId,
+    };
+
+    await createNotification(providerId, "offer_accepted", title, body, payload);
+    await sendPush(providerId, title, body, payload);
+  },
+);

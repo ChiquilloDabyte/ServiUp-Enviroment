@@ -58,7 +58,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyAjCvWx_3jiA4tIiwdSt1pNCpf5HvcvGDc',
-    appId: '1:741301175647:android:8eae00b182e51fd659a2ea',
+    appId: '1:741301175647:android:0fe1a4f76554b1ab59a2ea',
     messagingSenderId: '741301175647',
     projectId: 'serviup',
     storageBucket: 'serviup.firebasestorage.app',
