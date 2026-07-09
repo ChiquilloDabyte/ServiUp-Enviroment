@@ -27,3 +27,17 @@ class OfflineActions {
 final offlineActionsProvider = Provider<OfflineActions>((ref) {
   return OfflineActions(ref);
 });
+
+/// Keeps provider sync alive for the app lifetime using [Ref], not a widget.
+final syncListenerProvider = Provider<void>((ref) {
+  final subscription =
+      ref.watch(connectivityServiceProvider).onConnectivityChanged.listen(
+    (_) async {
+      final synced = await ref.read(syncServiceProvider).syncProvidersIfOnline();
+      if (!synced) return;
+      ref.invalidate(localProvidersProvider);
+      ref.invalidate(lastSyncTimeProvider);
+    },
+  );
+  ref.onDispose(subscription.cancel);
+});

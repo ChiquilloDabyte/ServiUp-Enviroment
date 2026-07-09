@@ -19,13 +19,6 @@ class SyncService {
   final LocalDbService _localDbService;
   final ConnectivityService _connectivityService;
 
-  Future<void> startListening(void Function() onSynced) async {
-    _connectivityService.onConnectivityChanged.listen((_) async {
-      final synced = await syncProvidersIfOnline();
-      if (synced) onSynced();
-    });
-  }
-
   Future<bool> syncProvidersIfOnline() async {
     if (!await _connectivityService.hasConnection()) {
       return false;

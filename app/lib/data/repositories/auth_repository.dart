@@ -19,11 +19,11 @@ class AuthRepository {
     required NotificationService notificationService,
     required AnalyticsService analyticsService,
     StorageService? storageService,
-  })  : _authService = authService,
-        _firestoreService = firestoreService,
-        _notificationService = notificationService,
-        _analyticsService = analyticsService,
-        _storageService = storageService ?? StorageService();
+  }) : _authService = authService,
+       _firestoreService = firestoreService,
+       _notificationService = notificationService,
+       _analyticsService = analyticsService,
+       _storageService = storageService ?? StorageService();
 
   final AuthService _authService;
   final FirestoreService _firestoreService;
@@ -45,7 +45,10 @@ class AuthRepository {
     required String password,
     required UserRole role,
   }) async {
-    final credential = await _authService.signUp(email: email, password: password);
+    final credential = await _authService.signUp(
+      email: email,
+      password: password,
+    );
     final user = credential.user;
     if (user == null) {
       throw const AuthException('No se pudo crear la cuenta.');
@@ -78,10 +81,9 @@ class AuthRepository {
     final token = await _notificationService.getToken();
     if (uid == null || token == null) return;
 
-    await _firestoreService.users.doc(uid).set(
-      {'fcmToken': token},
-      SetOptions(merge: true),
-    );
+    await _firestoreService.users.doc(uid).set({
+      'fcmToken': token,
+    }, SetOptions(merge: true));
   }
 
   Future<String> uploadAvatar(File file) async {

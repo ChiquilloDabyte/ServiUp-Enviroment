@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../domain/providers/app_providers.dart';
-import '../../domain/viewmodels/offline_viewmodel.dart';
 
 class SplashView extends ConsumerStatefulWidget {
   const SplashView({super.key});
@@ -23,9 +22,6 @@ class _SplashViewState extends ConsumerState<SplashView> {
   Future<void> _bootstrap() async {
     await ref.read(notificationServiceProvider).initialize();
     await ref.read(syncServiceProvider).syncProvidersIfOnline();
-    ref.read(syncServiceProvider).startListening(() {
-      ref.invalidate(localProvidersProvider);
-    });
 
     if (!mounted) return;
     final user = ref.read(authStateProvider).value;
