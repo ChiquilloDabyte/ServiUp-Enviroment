@@ -18,6 +18,7 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   UserRole _role = UserRole.client;
+  bool _acceptLegalTerms = false;
   String? _error;
 
   @override
@@ -29,6 +30,14 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+
+    if (!_acceptLegalTerms) {
+      setState(() {
+        _error =
+            'Debes aceptar los Términos y Condiciones y la Política de Privacidad. '
+      });
+      return;
+    }
 
     setState(() => _error = null);
     try {
@@ -94,6 +103,18 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
                   onChanged: (value) => setState(() => _role = value!),
                 ),
                 const SizedBox(height: 24),
+                CheckBoxListTile(
+                  value: _acceptLegalTerms,
+                  onChanged: (value) {
+                    setState(() {
+                      _acceptLegalTerms = value ?? false;                     
+                    });
+                  },
+                  controlAfinity: ListTileControlAffinity.leading,
+                  title: const Text(
+                    'He leído y acepto los Términos y Condiciones y la Política de Privacidad.',
+                  ),
+                ),
                 FilledButton(
                   onPressed: isLoading ? null : _submit,
                   child: Text(isLoading ? 'Creando...' : 'Registrarme'),
