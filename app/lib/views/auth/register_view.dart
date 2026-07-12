@@ -34,7 +34,7 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
     if (!_acceptLegalTerms) {
       setState(() {
         _error =
-            'Debes aceptar los Términos y Condiciones y la Política de Privacidad. '
+            'Debes aceptar los Términos y Condiciones y la Política de Privacidad.';
       });
       return;
     }
@@ -103,16 +103,44 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
                   onChanged: (value) => setState(() => _role = value!),
                 ),
                 const SizedBox(height: 24),
-                CheckBoxListTile(
+                CheckboxListTile(
                   value: _acceptLegalTerms,
                   onChanged: (value) {
                     setState(() {
-                      _acceptLegalTerms = value ?? false;                     
+                      _acceptLegalTerms = value ?? false;
+
+                      if (_acceptLegalTerms) {
+                        _error = null;
+                      }
                     });
-                  },
-                  controlAfinity: ListTileControlAffinity.leading,
-                  title: const Text(
-                    'He leído y acepto los Términos y Condiciones y la Política de Privacidad.',
+                  },  
+                  controlAffinity: ListTileControlAffinity.leading,
+                  title: Wrap(
+                    children: [
+                      const Text('He leído y acepto los '),
+                      GestureDetector(
+                        onTap: () => context.push('/terms'),
+                        child: const Text(
+                          'Términos y Condiciones',
+                          style: TextStyle(
+                            color: Colors.blue,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                      const Text(' y la '),
+                      GestureDetector(
+                        onTap: () => context.push('/privacy'),
+                        child: const Text(
+                          'Política de Privacidad',
+                          style: TextStyle(
+                            color: Colors.blue,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                      const Text('.'),
+                    ],
                   ),
                 ),
                 FilledButton(
