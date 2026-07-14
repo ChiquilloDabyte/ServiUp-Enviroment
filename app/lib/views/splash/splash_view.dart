@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:firebase_auth/firebase_auth.dart';
+
 import '../../core/constants/app_constants.dart';
 import '../../domain/providers/app_providers.dart';
 
@@ -13,18 +15,38 @@ class SplashView extends ConsumerStatefulWidget {
 }
 
 class _SplashViewState extends ConsumerState<SplashView> {
+  bool _bootstrapCancelled = false;
+
+  @override
+  void dispose() {
+    _bootstrapCancelled = true;
+    super.dispose();
+  }
+
   @override
   void initState() {
     super.initState();
     _bootstrap();
   }
 
-  Future<void> _bootstrap() async {
-    await ref.read(notificationServiceProvider).initialize();
-    await ref.read(syncServiceProvider).syncProvidersIfOnline();
+  bool get _isActive => mounted && !_bootstrapCancelled;
 
-    if (!mounted) return;
-    final user = ref.read(authStateProvider).value;
+  Future<void> _bootstrap() async {
+    final notificationService = ref.read(notificationServiceProvider);
+    final syncService = ref.read(syncServiceProvider);
+
+    await notificationService.initialize();
+    if (!_isActive) return;
+
+    await FirebaseAuth.instance.authStateChanges().first;
+    if (!_isActive) return;
+
+    if (FirebaseAuth.instance.currentUser != null) {
+      await syncService.syncProvidersIfOnline();
+    }
+    if (!_isActive) return;
+
+    final user = FirebaseAuth.instance.currentUser;
     context.go(user == null ? '/login' : '/home');
   }
 

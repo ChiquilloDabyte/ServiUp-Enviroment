@@ -1,3 +1,5 @@
+import 'package:firebase_auth/firebase_auth.dart';
+
 import '../../core/logger/app_logger.dart';
 import '../../models/enums/user_role.dart';
 import '../../models/local_provider_model.dart';
@@ -20,6 +22,10 @@ class SyncService {
   final ConnectivityService _connectivityService;
 
   Future<bool> syncProvidersIfOnline() async {
+    if (FirebaseAuth.instance.currentUser == null) {
+      return false;
+    }
+
     if (!await _connectivityService.hasConnection()) {
       return false;
     }

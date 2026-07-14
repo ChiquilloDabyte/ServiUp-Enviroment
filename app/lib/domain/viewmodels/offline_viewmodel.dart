@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/local_provider_model.dart';
@@ -33,6 +34,7 @@ final syncListenerProvider = Provider<void>((ref) {
   final subscription =
       ref.watch(connectivityServiceProvider).onConnectivityChanged.listen(
     (_) async {
+      if (FirebaseAuth.instance.currentUser == null) return;
       final synced = await ref.read(syncServiceProvider).syncProvidersIfOnline();
       if (!synced) return;
       ref.invalidate(localProvidersProvider);
