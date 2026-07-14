@@ -12,8 +12,12 @@ import '../views/home/home_view.dart';
 import '../views/notifications/notifications_view.dart';
 import '../views/offline/offline_providers_view.dart';
 import '../views/onboarding/onboarding_view.dart';
+import '../views/legal/privacy_policy_view.dart';
+import '../views/legal/terms_conditions_view.dart';
 import '../views/provider/provider_request_detail_view.dart';
 import '../views/splash/splash_view.dart';
+
+
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
@@ -96,6 +100,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/offline',
         builder: (context, state) => const OfflineProvidersView(),
+      ),
+      GoRoute(
+        path: '/terms',
+        builder: (context, state) => const TermsConditionsView(),
+      ),
+      GoRoute(
+        path: '/privacy',
+        builder: (context, state) => const PrivacyPolicyView(),
       ),
     ],
   );
