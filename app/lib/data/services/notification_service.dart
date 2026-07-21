@@ -11,11 +11,37 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 class NotificationService {
   NotificationService({FirebaseMessaging? messaging})
-      : _messaging = messaging ?? FirebaseMessaging.instance;
+    : _messaging = messaging ?? FirebaseMessaging.instance;
 
   final FirebaseMessaging _messaging;
+  Future<void>? _initializationFuture;
 
   Future<void> initialize() async {
+    final existingInitialization = _initializationFuture;
+    if (existingInitialization != null) {
+      await existingInitialization;
+      return;
+    }
+
+    final initialization = _initialize();
+    _initializationFuture = initialization;
+
+    try {
+      await initialization;
+    } catch (error, stackTrace) {
+      if (identical(_initializationFuture, initialization)) {
+        _initializationFuture = null;
+      }
+      FirebaseCrashlytics.instance.recordError(
+        error,
+        stackTrace,
+        reason: 'Notification service initialization failed',
+      );
+      rethrow;
+    }
+  }
+
+  Future<void> _initialize() async {
     if (kIsWeb) return;
 
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);

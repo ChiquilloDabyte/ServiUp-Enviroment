@@ -17,21 +17,22 @@ import '../views/legal/terms_conditions_view.dart';
 import '../views/provider/provider_request_detail_view.dart';
 import '../views/splash/splash_view.dart';
 
-
-
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authStateProvider);
-  final profile = ref.watch(currentUserProfileProvider);
+  final refresh = _RouterRefresh(ref);
+  ref.onDispose(refresh.dispose);
 
   return GoRouter(
     initialLocation: '/splash',
-    refreshListenable: _RouterRefresh(ref),
+    refreshListenable: refresh,
     redirect: (context, state) {
+      final authState = ref.read(authStateProvider);
+      final profile = ref.read(currentUserProfileProvider);
       final isSplash = state.matchedLocation == '/splash';
       if (isSplash) return null;
 
       final user = authState.value;
-      final loggingIn = state.matchedLocation == '/login' ||
+      final loggingIn =
+          state.matchedLocation == '/login' ||
           state.matchedLocation == '/register' ||
           state.matchedLocation == '/forgot-password';
 
@@ -51,14 +52,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      GoRoute(
-        path: '/splash',
-        builder: (context, state) => const SplashView(),
-      ),
-      GoRoute(
-        path: '/login',
-        builder: (context, state) => const LoginView(),
-      ),
+      GoRoute(path: '/splash', builder: (context, state) => const SplashView()),
+      GoRoute(path: '/login', builder: (context, state) => const LoginView()),
       GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterView(),
@@ -71,10 +66,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/onboarding',
         builder: (context, state) => const OnboardingView(),
       ),
-      GoRoute(
-        path: '/home',
-        builder: (context, state) => const HomeView(),
-      ),
+      GoRoute(path: '/home', builder: (context, state) => const HomeView()),
       GoRoute(
         path: '/requests/create',
         builder: (context, state) => const CreateRequestView(),

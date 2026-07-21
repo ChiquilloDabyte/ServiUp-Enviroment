@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/logger/app_logger.dart';
 import '../../domain/providers/app_providers.dart';
 
 class SplashView extends ConsumerStatefulWidget {
@@ -35,7 +36,15 @@ class _SplashViewState extends ConsumerState<SplashView> {
     final notificationService = ref.read(notificationServiceProvider);
     final syncService = ref.read(syncServiceProvider);
 
-    await notificationService.initialize();
+    try {
+      await notificationService.initialize();
+    } catch (error, stackTrace) {
+      AppLogger.warning(
+        'Notification initialization skipped during bootstrap',
+        error,
+        stackTrace,
+      );
+    }
     if (!_isActive) return;
 
     await FirebaseAuth.instance.authStateChanges().first;
@@ -44,7 +53,8 @@ class _SplashViewState extends ConsumerState<SplashView> {
     if (FirebaseAuth.instance.currentUser != null) {
       await syncService.syncProvidersIfOnline();
     }
-    if (!_isActive) return;
+    if (!mounted) return;
+    if (_bootstrapCancelled) return;
 
     final user = FirebaseAuth.instance.currentUser;
     context.go(user == null ? '/login' : '/home');

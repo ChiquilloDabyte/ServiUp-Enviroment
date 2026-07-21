@@ -41,13 +41,15 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
 
     setState(() => _error = null);
     try {
-      await ref.read(authViewModelProvider.notifier).signUp(
+      await ref
+          .read(authViewModelProvider.notifier)
+          .signUp(
             email: _emailController.text,
             password: _passwordController.text,
             role: _role,
           );
-      if (mounted) context.go('/onboarding');
     } catch (e) {
+      if (!mounted) return;
       setState(() => _error = authErrorMessage(e));
     }
   }
@@ -74,20 +76,28 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
                   controller: _emailController,
                   decoration: const InputDecoration(labelText: 'Correo'),
                   keyboardType: TextInputType.emailAddress,
-                  validator: (value) =>
-                      value == null || value.isEmpty ? 'Ingresa tu correo' : null,
+                  validator:
+                      (value) =>
+                          value == null || value.isEmpty
+                              ? 'Ingresa tu correo'
+                              : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _passwordController,
                   decoration: const InputDecoration(labelText: 'Contraseña'),
                   obscureText: true,
-                  validator: (value) => value == null || value.length < 6
-                      ? 'Mínimo 6 caracteres'
-                      : null,
+                  validator:
+                      (value) =>
+                          value == null || value.length < 6
+                              ? 'Mínimo 6 caracteres'
+                              : null,
                 ),
                 const SizedBox(height: 16),
-                Text('Tipo de cuenta', style: Theme.of(context).textTheme.titleMedium),
+                Text(
+                  'Tipo de cuenta',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
                 RadioListTile<UserRole>(
                   title: const Text('Cliente'),
                   subtitle: const Text('Publico solicitudes de servicio'),
@@ -113,7 +123,7 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
                         _error = null;
                       }
                     });
-                  },  
+                  },
                   controlAffinity: ListTileControlAffinity.leading,
                   title: Wrap(
                     children: [

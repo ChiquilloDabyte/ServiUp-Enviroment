@@ -18,7 +18,7 @@ class _TermsConditionsViewState extends State<TermsConditionsView> {
   }
 
   Future<void> _loadTerms() async {
-    final text = await rootBundle.loadString('assets/legal/terms.txt');
+    final text = await rootBundle.loadString('lib/assets/legal/terms.txt');
 
     setState(() {
       _terms = text;

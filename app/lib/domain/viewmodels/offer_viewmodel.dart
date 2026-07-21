@@ -16,7 +16,9 @@ class OfferViewModel extends Notifier<AsyncValue<void>> {
   }) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
-      await ref.read(offerRepositoryProvider).createOffer(
+      await ref
+          .read(offerRepositoryProvider)
+          .createOffer(
             requestId: requestId,
             providerId: providerId,
             proposedPrice: proposedPrice,
@@ -32,10 +34,9 @@ class OfferViewModel extends Notifier<AsyncValue<void>> {
   }) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
-      await ref.read(offerRepositoryProvider).acceptOffer(
-            offer: offer,
-            clientId: clientId,
-          );
+      await ref
+          .read(offerRepositoryProvider)
+          .acceptOffer(offer: offer, clientId: clientId);
     });
     if (state.hasError) throw state.error!;
   }
@@ -54,10 +55,9 @@ class OfferViewModel extends Notifier<AsyncValue<void>> {
   }) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
-      await ref.read(offerRepositoryProvider).markInProgress(
-            requestId,
-            providerId,
-          );
+      await ref
+          .read(offerRepositoryProvider)
+          .markInProgress(requestId, providerId);
     });
     if (state.hasError) throw state.error!;
   }
@@ -68,10 +68,9 @@ class OfferViewModel extends Notifier<AsyncValue<void>> {
   }) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
-      await ref.read(offerRepositoryProvider).markCompleted(
-            requestId,
-            providerId,
-          );
+      await ref
+          .read(offerRepositoryProvider)
+          .markCompleted(requestId, providerId);
     });
     if (state.hasError) throw state.error!;
   }
@@ -80,15 +79,17 @@ class OfferViewModel extends Notifier<AsyncValue<void>> {
 final offerViewModelProvider =
     NotifierProvider<OfferViewModel, AsyncValue<void>>(OfferViewModel.new);
 
-final requestOffersProvider =
-    StreamProvider.family<List<OfferModel>, String>((ref, requestId) {
-  return ref.watch(offerRepositoryProvider).watchOffersForRequest(requestId);
-});
+final requestOffersProvider = StreamProvider.autoDispose
+    .family<List<OfferModel>, String>((ref, requestId) {
+      return ref
+          .watch(offerRepositoryProvider)
+          .watchOffersForRequest(requestId);
+    });
 
-final providerOffersProvider =
-    StreamProvider.family<List<OfferModel>, String>((ref, providerId) {
-  return ref.watch(offerRepositoryProvider).watchProviderOffers(providerId);
-});
+final providerOffersProvider = StreamProvider.autoDispose
+    .family<List<OfferModel>, String>((ref, providerId) {
+      return ref.watch(offerRepositoryProvider).watchProviderOffers(providerId);
+    });
 
 String offerErrorMessage(Object error) {
   if (error is AppException) return error.message;

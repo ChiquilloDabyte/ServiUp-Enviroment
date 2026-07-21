@@ -26,7 +26,13 @@ service cloud.firestore {
     }
 
     match /service_requests/{requestId} {
-      allow read: if isSignedIn();
+      allow read: if isSignedIn() && (
+        resource.data.clientId == request.auth.uid ||
+        (isProvider() && (
+          resource.data.status == 'open' ||
+          resource.data.acceptedProviderId == request.auth.uid
+        ))
+      );
       allow create: if isSignedIn()
         && request.resource.data.clientId == request.auth.uid
         && request.resource.data.status == 'open';

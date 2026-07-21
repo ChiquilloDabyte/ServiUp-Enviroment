@@ -30,12 +30,11 @@ class _LoginViewState extends ConsumerState<LoginView> {
 
     setState(() => _error = null);
     try {
-      await ref.read(authViewModelProvider.notifier).signIn(
-            _emailController.text,
-            _passwordController.text,
-          );
-      if (mounted) context.go('/home');
+      await ref
+          .read(authViewModelProvider.notifier)
+          .signIn(_emailController.text, _passwordController.text);
     } catch (e) {
+      if (!mounted) return;
       setState(() => _error = authErrorMessage(e));
     }
   }
@@ -62,17 +61,22 @@ class _LoginViewState extends ConsumerState<LoginView> {
                   controller: _emailController,
                   decoration: const InputDecoration(labelText: 'Correo'),
                   keyboardType: TextInputType.emailAddress,
-                  validator: (value) =>
-                      value == null || value.isEmpty ? 'Ingresa tu correo' : null,
+                  validator:
+                      (value) =>
+                          value == null || value.isEmpty
+                              ? 'Ingresa tu correo'
+                              : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _passwordController,
                   decoration: const InputDecoration(labelText: 'Contraseña'),
                   obscureText: true,
-                  validator: (value) => value == null || value.length < 6
-                      ? 'Mínimo 6 caracteres'
-                      : null,
+                  validator:
+                      (value) =>
+                          value == null || value.length < 6
+                              ? 'Mínimo 6 caracteres'
+                              : null,
                 ),
                 const SizedBox(height: 24),
                 FilledButton(

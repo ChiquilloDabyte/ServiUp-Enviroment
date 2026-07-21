@@ -97,7 +97,7 @@ class _CreateRequestViewState extends ConsumerState<CreateRequestView> {
             address: _address,
             scheduledAt: _scheduledAt,
           );
-      if (mounted) context.go('/requests/$requestId');
+      if (mounted) context.pushReplacement('/requests/$requestId');
     } catch (e) {
       setState(() => _error = repositoryErrorMessage(e));
     }

@@ -18,7 +18,7 @@ class _PrivacyPolicyViewState extends State<PrivacyPolicyView> {
   }
 
   Future<void> _loadPrivacy() async {
-    final text = await rootBundle.loadString('assets/legal/privacy.txt');
+    final text = await rootBundle.loadString('lib/assets/legal/privacy.txt');
 
     setState(() {
       _privacy = text;

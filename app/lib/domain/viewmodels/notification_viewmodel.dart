@@ -3,12 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/notification_model.dart';
 import '../providers/app_providers.dart';
 
-final userNotificationsProvider =
-    StreamProvider.family<List<AppNotificationModel>, String>((ref, userId) {
-  return ref
-      .watch(notificationRepositoryProvider)
-      .watchUserNotifications(userId);
-});
+final userNotificationsProvider = StreamProvider.autoDispose
+    .family<List<AppNotificationModel>, String>((ref, userId) {
+      return ref
+          .watch(notificationRepositoryProvider)
+          .watchUserNotifications(userId);
+    });
 
 class NotificationActions {
   NotificationActions(this.ref);
@@ -16,9 +16,7 @@ class NotificationActions {
   final Ref ref;
 
   Future<void> markAsRead(String notificationId) {
-    return ref
-        .read(notificationRepositoryProvider)
-        .markAsRead(notificationId);
+    return ref.read(notificationRepositoryProvider).markAsRead(notificationId);
   }
 }
 
