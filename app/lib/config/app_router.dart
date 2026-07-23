@@ -8,6 +8,8 @@ import '../views/auth/login_view.dart';
 import '../views/auth/register_view.dart';
 import '../views/client/create_request_view.dart';
 import '../views/client/request_detail_view.dart';
+import '../views/chat/chat_view.dart';
+import '../views/chat/chats_view.dart';
 import '../views/home/home_view.dart';
 import '../views/notifications/notifications_view.dart';
 import '../views/offline/offline_providers_view.dart';
@@ -88,6 +90,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/notifications',
         builder: (context, state) => const NotificationsView(),
+      ),
+      GoRoute(path: '/chats', builder: (context, state) => const ChatsView()),
+      GoRoute(
+        path: '/chats/:id',
+        builder: (context, state) {
+          return ChatView(chatId: state.pathParameters['id']!);
+        },
       ),
       GoRoute(
         path: '/offline',

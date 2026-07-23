@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/repositories/auth_repository.dart';
+import '../../data/repositories/chat_repository.dart';
 import '../../data/repositories/notification_repository.dart';
 import '../../data/repositories/offer_repository.dart';
 import '../../data/repositories/offline_repository.dart';
@@ -75,10 +76,18 @@ final serviceRequestRepositoryProvider = Provider<ServiceRequestRepository>((
   );
 });
 
+final chatRepositoryProvider = Provider<ChatRepository>((ref) {
+  return ChatRepository(
+    firestoreService: ref.watch(firestoreServiceProvider),
+    storageService: ref.watch(storageServiceProvider),
+  );
+});
+
 final offerRepositoryProvider = Provider<OfferRepository>((ref) {
   return OfferRepository(
     firestoreService: ref.watch(firestoreServiceProvider),
     serviceRequestRepository: ref.watch(serviceRequestRepositoryProvider),
+    chatRepository: ref.watch(chatRepositoryProvider),
     analyticsService: ref.watch(analyticsServiceProvider),
   );
 });

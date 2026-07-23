@@ -30,21 +30,48 @@ class OfferViewModel extends Notifier<AsyncValue<void>> {
 
   Future<void> acceptOffer({
     required OfferModel offer,
-    required String clientId,
+    required String actorId,
   }) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       await ref
           .read(offerRepositoryProvider)
-          .acceptOffer(offer: offer, clientId: clientId);
+          .acceptOffer(offer: offer, actorId: actorId);
     });
     if (state.hasError) throw state.error!;
   }
 
-  Future<void> rejectOffer(String offerId) async {
+  Future<void> rejectOffer({
+    required OfferModel offer,
+    required String actorId,
+  }) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
-      await ref.read(offerRepositoryProvider).rejectOffer(offerId);
+      await ref
+          .read(offerRepositoryProvider)
+          .rejectOffer(offer: offer, actorId: actorId);
+    });
+    if (state.hasError) throw state.error!;
+  }
+
+  Future<void> createProposal({
+    required String chatId,
+    required String actorId,
+    required String actorRole,
+    required double proposedPrice,
+    required String conditions,
+  }) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      await ref
+          .read(offerRepositoryProvider)
+          .createProposal(
+            chatId: chatId,
+            actorId: actorId,
+            actorRole: actorRole,
+            proposedPrice: proposedPrice,
+            conditions: conditions,
+          );
     });
     if (state.hasError) throw state.error!;
   }
@@ -89,6 +116,11 @@ final requestOffersProvider = StreamProvider.autoDispose
 final providerOffersProvider = StreamProvider.autoDispose
     .family<List<OfferModel>, String>((ref, providerId) {
       return ref.watch(offerRepositoryProvider).watchProviderOffers(providerId);
+    });
+
+final chatOffersProvider = StreamProvider.autoDispose
+    .family<List<OfferModel>, String>((ref, chatId) {
+      return ref.watch(offerRepositoryProvider).watchOffersForChat(chatId);
     });
 
 String offerErrorMessage(Object error) {

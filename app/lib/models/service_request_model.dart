@@ -14,6 +14,7 @@ class ServiceRequestModel {
     required this.scheduledAt,
     required this.status,
     this.acceptedProviderId,
+    this.acceptedOfferId,
     this.price,
     this.createdAt,
   });
@@ -28,6 +29,7 @@ class ServiceRequestModel {
   final DateTime scheduledAt;
   final RequestStatus status;
   final String? acceptedProviderId;
+  final String? acceptedOfferId;
   final double? price;
   final DateTime? createdAt;
 
@@ -47,9 +49,11 @@ class ServiceRequestModel {
       latitude: location?.latitude ?? 0,
       longitude: location?.longitude ?? 0,
       address: data['address'] as String? ?? '',
-      scheduledAt: (data['scheduledAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      scheduledAt:
+          (data['scheduledAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       status: RequestStatus.fromString(data['status'] as String? ?? 'open'),
       acceptedProviderId: data['acceptedProviderId'] as String?,
+      acceptedOfferId: data['acceptedOfferId'] as String?,
       price: (data['price'] as num?)?.toDouble(),
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
     );
@@ -65,16 +69,19 @@ class ServiceRequestModel {
       'scheduledAt': Timestamp.fromDate(scheduledAt),
       'status': status.value,
       'acceptedProviderId': acceptedProviderId,
+      'acceptedOfferId': acceptedOfferId,
       'price': price,
-      'createdAt': createdAt != null
-          ? Timestamp.fromDate(createdAt!)
-          : FieldValue.serverTimestamp(),
+      'createdAt':
+          createdAt != null
+              ? Timestamp.fromDate(createdAt!)
+              : FieldValue.serverTimestamp(),
     };
   }
 
   ServiceRequestModel copyWith({
     RequestStatus? status,
     String? acceptedProviderId,
+    String? acceptedOfferId,
     double? price,
   }) {
     return ServiceRequestModel(
@@ -88,6 +95,7 @@ class ServiceRequestModel {
       scheduledAt: scheduledAt,
       status: status ?? this.status,
       acceptedProviderId: acceptedProviderId ?? this.acceptedProviderId,
+      acceptedOfferId: acceptedOfferId ?? this.acceptedOfferId,
       price: price ?? this.price,
       createdAt: createdAt,
     );

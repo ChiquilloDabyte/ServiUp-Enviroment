@@ -2,12 +2,46 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
+    function chat(chatId) {
+      return firestore.get(
+        /databases/(default)/documents/chats/$(chatId)
+      ).data;
+    }
+
+    function isChatParticipant(chatId) {
+      return request.auth != null && (
+        chat(chatId).clientId == request.auth.uid ||
+        chat(chatId).providerId == request.auth.uid
+      );
+    }
+
+    function requestForChat(chatId) {
+      return firestore.get(
+        /databases/(default)/documents/service_requests/$(chat(chatId).requestId)
+      ).data;
+    }
+
     match /users/{userId}/{allPaths=**} {
       allow read: if request.auth != null;
       allow write: if request.auth != null
         && request.auth.uid == userId
         && request.resource.size < 5 * 1024 * 1024
         && request.resource.contentType.matches('image/.*');
+    }
+
+    match /chats/{chatId}/{fileName} {
+      allow read: if isChatParticipant(chatId);
+      allow create: if isChatParticipant(chatId)
+        && chat(chatId).status == 'active'
+        && requestForChat(chatId).status in [
+          'open',
+          'accepted',
+          'in_progress'
+        ]
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*')
+        && fileName.matches('^[A-Za-z0-9_-]+\\.jpg$');
+      allow update, delete: if false;
     }
   }
 }

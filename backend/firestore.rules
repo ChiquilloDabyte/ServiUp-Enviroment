@@ -18,6 +18,29 @@ service cloud.firestore {
       return isSignedIn() && userDoc().role == 'provider';
     }
 
+    function isChatParticipant(chat) {
+      return isSignedIn() && (
+        chat.clientId == request.auth.uid ||
+        chat.providerId == request.auth.uid
+      );
+    }
+
+    function chatFor(chatId) {
+      return get(/databases/$(database)/documents/chats/$(chatId)).data;
+    }
+
+    function requestFor(requestId) {
+      return get(
+        /databases/$(database)/documents/service_requests/$(requestId)
+      ).data;
+    }
+
+    function offerAfter(offerId) {
+      return getAfter(
+        /databases/$(database)/documents/offers/$(offerId)
+      ).data;
+    }
+
     match /users/{userId} {
       allow read: if isSignedIn();
       allow create: if isOwner(userId);
@@ -37,22 +60,236 @@ service cloud.firestore {
         && request.resource.data.clientId == request.auth.uid
         && request.resource.data.status == 'open';
       allow update: if isSignedIn() && (
-        resource.data.clientId == request.auth.uid ||
-        (isProvider() && resource.data.acceptedProviderId == request.auth.uid)
+        (
+          resource.data.clientId == request.auth.uid &&
+          resource.data.status == 'open' &&
+          request.resource.data.status == 'cancelled' &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['status'])
+        ) ||
+        (
+          isProvider() &&
+          resource.data.acceptedProviderId == request.auth.uid &&
+          (
+            (
+              resource.data.status == 'accepted' &&
+              request.resource.data.status == 'in_progress'
+            ) ||
+            (
+              resource.data.status == 'in_progress' &&
+              request.resource.data.status == 'completed'
+            )
+          ) &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['status'])
+        ) ||
+        (
+          resource.data.status == 'open' &&
+          request.resource.data.status == 'accepted' &&
+          request.resource.data.acceptedOfferId is string &&
+          offerAfter(request.resource.data.acceptedOfferId).status ==
+            'accepted' &&
+          offerAfter(request.resource.data.acceptedOfferId).requestId ==
+            requestId &&
+          offerAfter(request.resource.data.acceptedOfferId).providerId ==
+            request.resource.data.acceptedProviderId &&
+          offerAfter(request.resource.data.acceptedOfferId).proposedPrice ==
+            request.resource.data.price &&
+          (
+            !('createdById' in
+              offerAfter(request.resource.data.acceptedOfferId)) ||
+            offerAfter(request.resource.data.acceptedOfferId).createdById !=
+              request.auth.uid
+          ) &&
+          (
+            request.auth.uid == resource.data.clientId ||
+            request.auth.uid ==
+              request.resource.data.acceptedProviderId
+          ) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'status',
+            'acceptedProviderId',
+            'acceptedOfferId',
+            'price'
+          ])
+        )
       );
       allow delete: if false;
     }
 
     match /offers/{offerId} {
-      allow read: if isSignedIn();
-      allow create: if isProvider()
-        && request.resource.data.providerId == request.auth.uid
-        && request.resource.data.status == 'pending';
-      allow update: if isSignedIn() && (
-        resource.data.providerId == request.auth.uid ||
-        get(/databases/$(database)/documents/service_requests/$(resource.data.requestId)).data.clientId == request.auth.uid
+      allow read: if isSignedIn() && (
+        (
+          resource.data.chatId is string &&
+          resource.data.chatId != '' &&
+          isChatParticipant(chatFor(resource.data.chatId))
+        ) ||
+        requestFor(resource.data.requestId).clientId == request.auth.uid ||
+        resource.data.providerId == request.auth.uid
       );
+
+      allow create: if isSignedIn()
+        && request.resource.data.keys().hasAll([
+          'requestId',
+          'providerId',
+          'proposedPrice',
+          'status',
+          'chatId',
+          'createdById',
+          'createdByRole',
+          'revision'
+        ])
+        && request.resource.data.status == 'pending'
+        && request.resource.data.proposedPrice > 0
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.createdById == request.auth.uid
+        && isChatParticipant(chatFor(request.resource.data.chatId))
+        && chatFor(request.resource.data.chatId).requestId ==
+          request.resource.data.requestId
+        && chatFor(request.resource.data.chatId).providerId ==
+          request.resource.data.providerId
+        && chatFor(request.resource.data.chatId).status == 'active'
+        && requestFor(request.resource.data.requestId).status == 'open';
+
+      allow update: if isSignedIn()
+        && (
+          (
+            resource.data.chatId is string &&
+            resource.data.chatId != '' &&
+            isChatParticipant(chatFor(resource.data.chatId))
+          ) ||
+          (
+            (
+              !('chatId' in resource.data) ||
+              resource.data.chatId == ''
+            ) &&
+            (
+              requestFor(resource.data.requestId).clientId ==
+                request.auth.uid ||
+              resource.data.providerId == request.auth.uid
+            )
+          )
+        )
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['status'])
+        && resource.data.status == 'pending'
+        && request.resource.data.status in [
+          'accepted',
+          'rejected',
+          'superseded'
+        ]
+        && (
+          request.resource.data.status == 'superseded' ||
+          (
+            (
+              'createdById' in resource.data &&
+              resource.data.createdById != request.auth.uid
+            ) ||
+            (
+              !('createdById' in resource.data) &&
+              resource.data.providerId != request.auth.uid
+            )
+          )
+        );
       allow delete: if false;
+    }
+
+    match /chats/{chatId} {
+      // A participant may read an existing chat. Signed-in users may check
+      // whether a deterministic chat id is still unused before creating it.
+      allow get: if isSignedIn() && (
+        !exists(/databases/$(database)/documents/chats/$(chatId)) ||
+        isChatParticipant(resource.data)
+      );
+      allow list: if isChatParticipant(resource.data);
+
+      allow create: if isSignedIn()
+        && request.resource.data.keys().hasAll([
+          'requestId',
+          'clientId',
+          'providerId',
+          'status',
+          'unreadByClient',
+          'unreadByProvider'
+        ])
+        && request.resource.data.clientId ==
+          requestFor(request.resource.data.requestId).clientId
+        && (
+          requestFor(request.resource.data.requestId).status == 'open' ||
+          requestFor(request.resource.data.requestId).acceptedProviderId ==
+            request.resource.data.providerId
+        )
+        && (
+          request.auth.uid == request.resource.data.clientId ||
+          request.auth.uid == request.resource.data.providerId
+        )
+        && request.resource.data.status == 'active'
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.unreadByClient == 0
+        && request.resource.data.unreadByProvider == 0
+        && chatId ==
+          request.resource.data.requestId + '_' +
+          request.resource.data.providerId;
+
+      allow update: if isChatParticipant(resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status',
+          'lastMessage',
+          'lastMessageAt',
+          'updatedAt',
+          'unreadByClient',
+          'unreadByProvider'
+        ])
+        && request.resource.data.clientId == resource.data.clientId
+        && request.resource.data.providerId == resource.data.providerId
+        && request.resource.data.requestId == resource.data.requestId
+        && (
+          request.resource.data.status == resource.data.status ||
+          (
+            resource.data.status == 'active' &&
+            request.resource.data.status == 'read_only'
+          )
+        );
+      allow delete: if false;
+
+      match /messages/{messageId} {
+        allow read: if isChatParticipant(
+          get(/databases/$(database)/documents/chats/$(chatId)).data
+        );
+        allow create: if isSignedIn()
+          && request.resource.data.keys().hasOnly([
+            'senderId',
+            'type',
+            'text',
+            'imageUrl',
+            'createdAt'
+          ])
+          && request.resource.data.senderId == request.auth.uid
+          && request.resource.data.createdAt == request.time
+          && isChatParticipant(chatFor(chatId))
+          && chatFor(chatId).status == 'active'
+          && requestFor(chatFor(chatId).requestId).status in [
+            'open',
+            'accepted',
+            'in_progress'
+          ]
+          && (
+            (
+              request.resource.data.type == 'text' &&
+              request.resource.data.text is string &&
+              request.resource.data.text.size() > 0 &&
+              request.resource.data.text.size() <= 2000 &&
+              request.resource.data.imageUrl == null
+            ) ||
+            (
+              request.resource.data.type == 'image' &&
+              request.resource.data.text == '' &&
+              request.resource.data.imageUrl is string
+            )
+          );
+        allow update, delete: if false;
+      }
     }
 
     match /notifications/{notificationId} {

@@ -28,7 +28,8 @@ class _ProviderHomeViewState extends ConsumerState<ProviderHomeView> {
 
   Future<void> _loadLocation() async {
     try {
-      final location = await ref.read(locationServiceProvider).getCurrentLocation();
+      final location =
+          await ref.read(locationServiceProvider).getCurrentLocation();
       setState(() {
         _lat = location.latitude;
         _lng = location.longitude;
@@ -41,9 +42,16 @@ class _ProviderHomeViewState extends ConsumerState<ProviderHomeView> {
     final user = ref.watch(currentUserProfileProvider).value;
     final hasConnection = ref.watch(hasConnectionProvider).value ?? true;
 
-    final nearby = _lat != null && _lng != null
-        ? ref.watch(nearbyRequestsProvider((lat: _lat!, lng: _lng!, category: _categoryFilter)))
-        : const AsyncValue<List<dynamic>>.loading();
+    final nearby =
+        _lat != null && _lng != null
+            ? ref.watch(
+              nearbyRequestsProvider((
+                lat: _lat!,
+                lng: _lng!,
+                category: _categoryFilter,
+              )),
+            )
+            : const AsyncValue<List<dynamic>>.loading();
 
     return DefaultTabController(
       length: 2,
@@ -51,12 +59,14 @@ class _ProviderHomeViewState extends ConsumerState<ProviderHomeView> {
         appBar: AppBar(
           title: const Text('Panel prestador'),
           bottom: const TabBar(
-            tabs: [
-              Tab(text: 'Cercanas'),
-              Tab(text: 'Mis trabajos'),
-            ],
+            tabs: [Tab(text: 'Cercanas'), Tab(text: 'Mis trabajos')],
           ),
           actions: [
+            IconButton(
+              tooltip: 'Conversaciones',
+              icon: const Icon(Icons.chat_bubble_outline),
+              onPressed: () => context.push('/chats'),
+            ),
             IconButton(
               icon: const Icon(Icons.notifications_outlined),
               onPressed: () => context.push('/notifications'),
@@ -74,7 +84,9 @@ class _ProviderHomeViewState extends ConsumerState<ProviderHomeView> {
           children: [
             if (!hasConnection)
               MaterialBanner(
-                content: const Text('Sin conexión. Consulta el directorio offline.'),
+                content: const Text(
+                  'Sin conexión. Consulta el directorio offline.',
+                ),
                 actions: [
                   TextButton(
                     onPressed: () => context.push('/offline'),
@@ -87,10 +99,14 @@ class _ProviderHomeViewState extends ConsumerState<ProviderHomeView> {
                 children: [
                   nearby.when(
                     loading: () => const LoadingView(),
-                    error: (error, _) => Center(child: Text(repositoryErrorMessage(error))),
+                    error:
+                        (error, _) =>
+                            Center(child: Text(repositoryErrorMessage(error))),
                     data: (requests) {
                       if (requests.isEmpty) {
-                        return const Center(child: Text('No hay solicitudes cercanas.'));
+                        return const Center(
+                          child: Text('No hay solicitudes cercanas.'),
+                        );
                       }
 
                       return ListView.separated(
@@ -101,7 +117,10 @@ class _ProviderHomeViewState extends ConsumerState<ProviderHomeView> {
                           final request = requests[index];
                           return RequestCard(
                             request: request,
-                            onTap: () => context.push('/provider/requests/${request.id}'),
+                            onTap:
+                                () => context.push(
+                                  '/provider/requests/${request.id}',
+                                ),
                           );
                         },
                       );
@@ -109,25 +128,34 @@ class _ProviderHomeViewState extends ConsumerState<ProviderHomeView> {
                   ),
                   user == null
                       ? const LoadingView()
-                      : ref.watch(providerActiveJobsProvider(user.id)).when(
+                      : ref
+                          .watch(providerActiveJobsProvider(user.id))
+                          .when(
                             loading: () => const LoadingView(),
-                            error: (error, _) =>
-                                Center(child: Text(repositoryErrorMessage(error))),
+                            error:
+                                (error, _) => Center(
+                                  child: Text(repositoryErrorMessage(error)),
+                                ),
                             data: (jobs) {
                               if (jobs.isEmpty) {
-                                return const Center(child: Text('No tienes trabajos activos.'));
+                                return const Center(
+                                  child: Text('No tienes trabajos activos.'),
+                                );
                               }
 
                               return ListView.separated(
                                 padding: const EdgeInsets.all(16),
                                 itemCount: jobs.length,
-                                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                                separatorBuilder:
+                                    (_, __) => const SizedBox(height: 12),
                                 itemBuilder: (context, index) {
                                   final job = jobs[index];
                                   return RequestCard(
                                     request: job,
-                                    onTap: () =>
-                                        context.push('/provider/requests/${job.id}'),
+                                    onTap:
+                                        () => context.push(
+                                          '/provider/requests/${job.id}',
+                                        ),
                                   );
                                 },
                               );

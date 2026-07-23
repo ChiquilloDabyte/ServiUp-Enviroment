@@ -4,7 +4,7 @@ import '../../core/constants/app_constants.dart';
 
 class FirestoreService {
   FirestoreService({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _firestore;
 
@@ -21,6 +21,9 @@ class FirestoreService {
   CollectionReference<Map<String, dynamic>> get offers =>
       collection(AppConstants.offersCollection);
 
+  CollectionReference<Map<String, dynamic>> get chats =>
+      collection(AppConstants.chatsCollection);
+
   CollectionReference<Map<String, dynamic>> get notifications =>
       collection(AppConstants.notificationsCollection);
 
@@ -28,5 +31,11 @@ class FirestoreService {
     final batch = _firestore.batch();
     action(batch);
     await batch.commit();
+  }
+
+  Future<T> runTransaction<T>(
+    Future<T> Function(Transaction transaction) action,
+  ) {
+    return _firestore.runTransaction(action);
   }
 }
