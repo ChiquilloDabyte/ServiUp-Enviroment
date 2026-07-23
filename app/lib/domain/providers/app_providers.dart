@@ -13,26 +13,43 @@ import '../../data/services/connectivity_service.dart';
 import '../../data/services/firestore_service.dart';
 import '../../data/services/local_db_service.dart';
 import '../../data/services/location_service.dart';
+import '../../data/services/maps_config_service.dart';
 import '../../data/services/notification_service.dart';
+import '../../data/services/places_service.dart';
 import '../../data/services/storage_service.dart';
 import '../../data/services/sync_service.dart';
 import '../../models/user_model.dart';
 
 final authServiceProvider = Provider<AuthService>((ref) => AuthService());
-final firestoreServiceProvider =
-    Provider<FirestoreService>((ref) => FirestoreService());
-final storageServiceProvider =
-    Provider<StorageService>((ref) => StorageService());
-final locationServiceProvider =
-    Provider<LocationService>((ref) => LocationService());
-final connectivityServiceProvider =
-    Provider<ConnectivityService>((ref) => ConnectivityService());
-final localDbServiceProvider =
-    Provider<LocalDbService>((ref) => LocalDbService());
-final notificationServiceProvider =
-    Provider<NotificationService>((ref) => NotificationService());
-final analyticsServiceProvider =
-    Provider<AnalyticsService>((ref) => AnalyticsService());
+final firestoreServiceProvider = Provider<FirestoreService>(
+  (ref) => FirestoreService(),
+);
+final storageServiceProvider = Provider<StorageService>(
+  (ref) => StorageService(),
+);
+final locationServiceProvider = Provider<LocationService>(
+  (ref) => LocationService(),
+);
+final mapsConfigServiceProvider = Provider<MapsConfigService>(
+  (ref) => MapsConfigService(),
+);
+final placesServiceProvider = Provider<PlacesService>((ref) {
+  return GooglePlacesService(
+    mapsConfigService: ref.watch(mapsConfigServiceProvider),
+  );
+});
+final connectivityServiceProvider = Provider<ConnectivityService>(
+  (ref) => ConnectivityService(),
+);
+final localDbServiceProvider = Provider<LocalDbService>(
+  (ref) => LocalDbService(),
+);
+final notificationServiceProvider = Provider<NotificationService>(
+  (ref) => NotificationService(),
+);
+final analyticsServiceProvider = Provider<AnalyticsService>(
+  (ref) => AnalyticsService(),
+);
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepository(
@@ -48,8 +65,9 @@ final userRepositoryProvider = Provider<UserRepository>((ref) {
   return UserRepository(firestoreService: ref.watch(firestoreServiceProvider));
 });
 
-final serviceRequestRepositoryProvider =
-    Provider<ServiceRequestRepository>((ref) {
+final serviceRequestRepositoryProvider = Provider<ServiceRequestRepository>((
+  ref,
+) {
   return ServiceRequestRepository(
     firestoreService: ref.watch(firestoreServiceProvider),
     locationService: ref.watch(locationServiceProvider),
@@ -65,8 +83,7 @@ final offerRepositoryProvider = Provider<OfferRepository>((ref) {
   );
 });
 
-final notificationRepositoryProvider =
-    Provider<NotificationRepository>((ref) {
+final notificationRepositoryProvider = Provider<NotificationRepository>((ref) {
   return NotificationRepository(
     firestoreService: ref.watch(firestoreServiceProvider),
   );
