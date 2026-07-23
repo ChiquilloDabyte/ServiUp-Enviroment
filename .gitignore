@@ -70,3 +70,4 @@ node_modules/
 
 # VS Code directories
 .vs/
+.aider*
