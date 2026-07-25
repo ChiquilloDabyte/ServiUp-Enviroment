@@ -24,6 +24,11 @@ class ClientHomeView extends ConsumerWidget {
         title: const Text('Mis solicitudes'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.person),
+            tooltip: 'Mi perfil',
+            onPressed: () => context.push('/profile'),
+          ),
+          IconButton(
             icon: const Icon(Icons.notifications_outlined),
             onPressed: () => context.push('/notifications'),
           ),

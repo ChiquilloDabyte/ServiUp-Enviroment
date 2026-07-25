@@ -14,8 +14,10 @@ import '../views/offline/offline_providers_view.dart';
 import '../views/onboarding/onboarding_view.dart';
 import '../views/legal/privacy_policy_view.dart';
 import '../views/legal/terms_conditions_view.dart';
+import '../views/profile/profile_view.dart';
 import '../views/provider/provider_request_detail_view.dart';
 import '../views/splash/splash_view.dart';
+import '../views/profile/edit_profile_view.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = _RouterRefresh(ref);
@@ -34,7 +36,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       final loggingIn =
           state.matchedLocation == '/login' ||
           state.matchedLocation == '/register' ||
-          state.matchedLocation == '/forgot-password';
+          state.matchedLocation == '/forgot-password' ||
+          state.matchedLocation == '/terms' ||
+          state.matchedLocation == '/privacy';
 
       if (user == null) {
         return loggingIn ? null : '/login';
@@ -100,6 +104,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/privacy',
         builder: (context, state) => const PrivacyPolicyView(),
+      ),
+      GoRoute(
+        path: '/profile',
+        builder: (context, state) => const ProfileView(),
+      ),
+      GoRoute(
+        path: '/profile/edit',
+        builder: (context, state) => const EditProfileView(),
       ),
     ],
   );

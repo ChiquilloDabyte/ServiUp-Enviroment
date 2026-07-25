@@ -42,6 +42,13 @@ class UserRepository {
         );
   }
 
+  Future<void> updateProfile(UserModel user) async {
+    await _firestoreService.users.doc(user.id).set(
+      user.toFirestore(),
+      SetOptions(merge: true),
+    );
+  }
+
   Future<void> updateFcmToken(String userId, String token) async {
     await _firestoreService.users.doc(userId).set(
       {'fcmToken': token},
