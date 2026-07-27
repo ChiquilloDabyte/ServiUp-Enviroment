@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -19,11 +21,30 @@ class LocationPicker extends StatefulWidget {
 
 class _LocationPickerState extends State<LocationPicker> {
   late LatLng _position;
+  GoogleMapController? _mapController;
 
   @override
   void initState() {
     super.initState();
     _position = LatLng(widget.initialLatitude, widget.initialLongitude);
+  }
+
+  @override
+  void didUpdateWidget(covariant LocationPicker oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialLatitude == oldWidget.initialLatitude &&
+        widget.initialLongitude == oldWidget.initialLongitude) {
+      return;
+    }
+
+    _position = LatLng(widget.initialLatitude, widget.initialLongitude);
+    unawaited(_mapController?.animateCamera(CameraUpdate.newLatLng(_position)));
+  }
+
+  @override
+  void dispose() {
+    _mapController?.dispose();
+    super.dispose();
   }
 
   @override
@@ -34,6 +55,7 @@ class _LocationPickerState extends State<LocationPicker> {
         height: 220,
         child: GoogleMap(
           initialCameraPosition: CameraPosition(target: _position, zoom: 15),
+          onMapCreated: (controller) => _mapController = controller,
           markers: {
             Marker(markerId: const MarkerId('selected'), position: _position),
           },

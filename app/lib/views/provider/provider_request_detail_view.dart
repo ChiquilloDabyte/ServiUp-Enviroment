@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../domain/providers/app_providers.dart';
 import '../../domain/viewmodels/offer_viewmodel.dart';
@@ -46,16 +47,19 @@ class _ProviderRequestDetailViewState
     setState(() => _error = null);
 
     try {
-      await ref.read(offerViewModelProvider.notifier).sendOffer(
+      await ref
+          .read(offerViewModelProvider.notifier)
+          .sendOffer(
             requestId: widget.requestId,
             providerId: user.id,
             proposedPrice: price,
             message: _messageController.text,
           );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Oferta enviada')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Oferta enviada')));
+        context.push('/chats/${widget.requestId}_${user.id}');
       }
     } catch (e) {
       setState(() => _error = offerErrorMessage(e));
@@ -67,6 +71,10 @@ class _ProviderRequestDetailViewState
     final request = ref.watch(requestDetailProvider(widget.requestId));
     final user = ref.watch(currentUserProfileProvider).value;
     final isLoading = ref.watch(offerViewModelProvider).isLoading;
+    final providerOffers =
+        user == null
+            ? const AsyncValue<List<dynamic>>.loading()
+            : ref.watch(providerOffersProvider(user.id));
 
     return Scaffold(
       appBar: AppBar(title: const Text('Detalle del trabajo')),
@@ -87,7 +95,10 @@ class _ProviderRequestDetailViewState
                 ErrorBanner(message: _error!),
                 const SizedBox(height: 16),
               ],
-              Text(item.category, style: Theme.of(context).textTheme.headlineSmall),
+              Text(
+                item.category,
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
               const SizedBox(height: 8),
               Text(item.description),
               Text('Dirección: ${item.address}'),
@@ -102,7 +113,9 @@ class _ProviderRequestDetailViewState
                 const SizedBox(height: 24),
                 TextField(
                   controller: _priceController,
-                  decoration: const InputDecoration(labelText: 'Precio propuesto'),
+                  decoration: const InputDecoration(
+                    labelText: 'Precio propuesto',
+                  ),
                   keyboardType: TextInputType.number,
                 ),
                 const SizedBox(height: 12),
@@ -116,17 +129,41 @@ class _ProviderRequestDetailViewState
                   onPressed: isLoading ? null : _sendOffer,
                   child: Text(isLoading ? 'Enviando...' : 'Enviar oferta'),
                 ),
+                providerOffers.when(
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, _) => const SizedBox.shrink(),
+                  data: (offers) {
+                    final hasOffer = offers.any(
+                      (offer) => offer.requestId == item.id,
+                    );
+                    if (!hasOffer || user == null) {
+                      return const SizedBox.shrink();
+                    }
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: OutlinedButton.icon(
+                        onPressed:
+                            () => context.push('/chats/${item.id}_${user.id}'),
+                        icon: const Icon(Icons.chat_bubble_outline),
+                        label: const Text('Conversar'),
+                      ),
+                    );
+                  },
+                ),
               ],
               if (isAssignedProvider &&
                   item.status == RequestStatus.accepted) ...[
                 const SizedBox(height: 16),
                 FilledButton(
-                  onPressed: user == null
-                      ? null
-                      : () => ref.read(offerViewModelProvider.notifier).markInProgress(
-                            requestId: item.id,
-                            providerId: user.id,
-                          ),
+                  onPressed:
+                      user == null
+                          ? null
+                          : () => ref
+                              .read(offerViewModelProvider.notifier)
+                              .markInProgress(
+                                requestId: item.id,
+                                providerId: user.id,
+                              ),
                   child: const Text('Iniciar servicio'),
                 ),
               ],
@@ -134,12 +171,15 @@ class _ProviderRequestDetailViewState
                   item.status == RequestStatus.inProgress) ...[
                 const SizedBox(height: 16),
                 FilledButton(
-                  onPressed: user == null
-                      ? null
-                      : () => ref.read(offerViewModelProvider.notifier).markCompleted(
-                            requestId: item.id,
-                            providerId: user.id,
-                          ),
+                  onPressed:
+                      user == null
+                          ? null
+                          : () => ref
+                              .read(offerViewModelProvider.notifier)
+                              .markCompleted(
+                                requestId: item.id,
+                                providerId: user.id,
+                              ),
                   child: const Text('Marcar como completado'),
                 ),
               ],

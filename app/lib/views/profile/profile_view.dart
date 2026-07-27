@@ -12,6 +12,10 @@ class ProfileView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(currentUserProfileProvider);
+    final rating =
+      profile.value != null && profile.value!.role.name == 'provider'
+          ? ref.watch(providerRatingProvider(profile.value!.id))
+          : null;
 
     return profile.when(
       loading: () => const Scaffold(
@@ -108,27 +112,47 @@ class ProfileView extends ConsumerWidget {
                     subtitle: Text(user.phone),
                   ),
                 ),
-                Card(
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: ListTile(
-                    leading: const Icon(
-                      Icons.star,
-                      color: Colors.amber,
-                      size: 30,
-                    ),
-                    title: const Text('Calificación'),
-                    subtitle: Text(
-                      user.rating.toStringAsFixed(1),
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                if (user.role.name == 'provider')
+                  rating!.when(
+                    loading: () => const Card(
+                      child: ListTile(
+                        leading: Icon(Icons.star, color: Colors.amber),
+                        title: Text('Calificación'),
+                        subtitle: Text('Cargando...'),
                       ),
                     ),
+                    error: (_, __) => const SizedBox.shrink(),
+                    data: (data) {
+                      final average = data['average'] as double;
+                      final count = data['count'] as int;
+
+                      return Card(
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: ListTile(
+                          leading: const Icon(
+                            Icons.star,
+                            color: Colors.amber,
+                            size: 30,
+                          ),
+                          title: Text(
+                            average.toStringAsFixed(1),
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          subtitle: Text(
+                            count == 1
+                                ? '1 calificación'
+                                : '$count calificaciones',
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                ),
                 const SizedBox(height: 24),
 
                 FilledButton.icon(
@@ -138,8 +162,7 @@ class ProfileView extends ConsumerWidget {
                   icon: const Icon(Icons.edit),
                   label: const Text('Editar perfil'),
                 ),
-                const SizedBox(height: 16),
-
+                const SizedBox(height: 12),
                 OutlinedButton.icon(
                   onPressed: () async {
                     await ref.read(authViewModelProvider.notifier).signOut();

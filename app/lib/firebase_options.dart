@@ -25,15 +25,9 @@ class DefaultFirebaseOptions {
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return macos;
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -63,14 +57,34 @@ class DefaultFirebaseOptions {
     projectId: 'serviup',
     storageBucket: 'serviup.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyDJLxZhBIhWHZP9dBNiT6OvW5NxQdiolZs',
     appId: '1:741301175647:ios:e97977d3f8156d6b59a2ea',
     messagingSenderId: '741301175647',
     projectId: 'serviup',
     storageBucket: 'serviup.firebasestorage.app',
+    androidClientId: '741301175647-4lv4rot9khu2e7t4q0kejqptbh2029r6.apps.googleusercontent.com',
     iosClientId: '741301175647-q4huu9q8dq6oq73q623qkuopqm3jcnal.apps.googleusercontent.com',
     iosBundleId: 'com.example.flutterApplication1',
+  );
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyDJLxZhBIhWHZP9dBNiT6OvW5NxQdiolZs',
+    appId: '1:741301175647:ios:e97977d3f8156d6b59a2ea',
+    messagingSenderId: '741301175647',
+    projectId: 'serviup',
+    storageBucket: 'serviup.firebasestorage.app',
+    androidClientId: '741301175647-4lv4rot9khu2e7t4q0kejqptbh2029r6.apps.googleusercontent.com',
+    iosClientId: '741301175647-q4huu9q8dq6oq73q623qkuopqm3jcnal.apps.googleusercontent.com',
+    iosBundleId: 'com.example.flutterApplication1',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyBLQEjUAQN1co6FLhUqRvcniPt7SMOodkk',
+    appId: '1:741301175647:web:490007837ec17b8759a2ea',
+    messagingSenderId: '741301175647',
+    projectId: 'serviup',
+    authDomain: 'serviup.firebaseapp.com',
+    storageBucket: 'serviup.firebasestorage.app',
+    measurementId: 'G-2KBL5GBSKJ',
   );
 }

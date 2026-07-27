@@ -29,6 +29,13 @@
             {
               "client_id": "741301175647-mo486h4bh54ppmmi1fq658fsmrjcuitg.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "741301175647-q4huu9q8dq6oq73q623qkuopqm3jcnal.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.flutterApplication1"
+              }
             }
           ]
         }
@@ -42,6 +49,22 @@
         }
       },
       "oauth_client": [
+        {
+          "client_id": "741301175647-4lv4rot9khu2e7t4q0kejqptbh2029r6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.teamMaster.ServiUp",
+            "certificate_hash": "ec8e035aae501fce924eb0878cd1736b934b1c99"
+          }
+        },
+        {
+          "client_id": "741301175647-vp5lju3gdntgnaec9qsgps18jl37fq4n.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.teamMaster.ServiUp",
+            "certificate_hash": "738380b04e1128d164a8f12127c217b15364662b"
+          }
+        },
         {
           "client_id": "741301175647-mo486h4bh54ppmmi1fq658fsmrjcuitg.apps.googleusercontent.com",
           "client_type": 3
@@ -58,6 +81,13 @@
             {
               "client_id": "741301175647-mo486h4bh54ppmmi1fq658fsmrjcuitg.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "741301175647-q4huu9q8dq6oq73q623qkuopqm3jcnal.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.flutterApplication1"
+              }
             }
           ]
         }

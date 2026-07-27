@@ -8,6 +8,8 @@ import '../views/auth/login_view.dart';
 import '../views/auth/register_view.dart';
 import '../views/client/create_request_view.dart';
 import '../views/client/request_detail_view.dart';
+import '../views/chat/chat_view.dart';
+import '../views/chat/chats_view.dart';
 import '../views/home/home_view.dart';
 import '../views/notifications/notifications_view.dart';
 import '../views/offline/offline_providers_view.dart';
@@ -18,6 +20,7 @@ import '../views/profile/profile_view.dart';
 import '../views/provider/provider_request_detail_view.dart';
 import '../views/splash/splash_view.dart';
 import '../views/profile/edit_profile_view.dart';
+import '../views/rating/service_rating_view.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = _RouterRefresh(ref);
@@ -93,6 +96,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/notifications',
         builder: (context, state) => const NotificationsView(),
       ),
+      GoRoute(path: '/chats', builder: (context, state) => const ChatsView()),
+      GoRoute(
+        path: '/chats/:id',
+        builder: (context, state) {
+          return ChatView(chatId: state.pathParameters['id']!);
+        },
+      ),
       GoRoute(
         path: '/offline',
         builder: (context, state) => const OfflineProvidersView(),
@@ -112,6 +122,20 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/profile/edit',
         builder: (context, state) => const EditProfileView(),
+      ),
+      GoRoute(
+        path: '/rating',
+        builder: (context, state) {
+          final requestId = state.uri.queryParameters['requestId']!;
+          final providerId = state.uri.queryParameters['providerId']!;
+          final clientId = state.uri.queryParameters['clientId']!;
+
+          return ServiceRatingView(
+            requestId: requestId,
+            providerId: providerId,
+            clientId: clientId,
+          );
+        },
       ),
     ],
   );

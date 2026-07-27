@@ -1,7 +1,8 @@
 enum OfferStatus {
   pending('pending'),
   accepted('accepted'),
-  rejected('rejected');
+  rejected('rejected'),
+  superseded('superseded');
 
   const OfferStatus(this.value);
 
@@ -15,8 +16,9 @@ enum OfferStatus {
   }
 
   String get label => switch (this) {
-        OfferStatus.pending => 'Pendiente',
-        OfferStatus.accepted => 'Aceptada',
-        OfferStatus.rejected => 'Rechazada',
-      };
+    OfferStatus.pending => 'Pendiente',
+    OfferStatus.accepted => 'Aceptada',
+    OfferStatus.rejected => 'Rechazada',
+    OfferStatus.superseded => 'Reemplazada',
+  };
 }

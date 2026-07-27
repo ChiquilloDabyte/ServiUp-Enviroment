@@ -68,4 +68,6 @@ class NotificationService {
       FirebaseMessaging.onMessageOpenedApp;
 
   Stream<RemoteMessage> get onMessage => FirebaseMessaging.onMessage;
+
+  Future<RemoteMessage?> getInitialMessage() => _messaging.getInitialMessage();
 }

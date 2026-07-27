@@ -10,6 +10,12 @@ class OfferModel {
     required this.proposedPrice,
     required this.message,
     required this.status,
+    this.chatId = '',
+    this.createdById = '',
+    this.createdByRole = 'provider',
+    this.revision = 1,
+    this.supersedesOfferId,
+    this.conditions,
     this.createdAt,
   });
 
@@ -19,6 +25,12 @@ class OfferModel {
   final double proposedPrice;
   final String message;
   final OfferStatus status;
+  final String chatId;
+  final String createdById;
+  final String createdByRole;
+  final int revision;
+  final String? supersedesOfferId;
+  final String? conditions;
   final DateTime? createdAt;
 
   factory OfferModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -31,6 +43,13 @@ class OfferModel {
       proposedPrice: (data['proposedPrice'] as num?)?.toDouble() ?? 0,
       message: data['message'] as String? ?? '',
       status: OfferStatus.fromString(data['status'] as String? ?? 'pending'),
+      chatId: data['chatId'] as String? ?? '',
+      createdById:
+          data['createdById'] as String? ?? data['providerId'] as String? ?? '',
+      createdByRole: data['createdByRole'] as String? ?? 'provider',
+      revision: data['revision'] as int? ?? 1,
+      supersedesOfferId: data['supersedesOfferId'] as String?,
+      conditions: data['conditions'] as String?,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
     );
   }
@@ -42,9 +61,16 @@ class OfferModel {
       'proposedPrice': proposedPrice,
       'message': message,
       'status': status.value,
-      'createdAt': createdAt != null
-          ? Timestamp.fromDate(createdAt!)
-          : FieldValue.serverTimestamp(),
+      'chatId': chatId,
+      'createdById': createdById,
+      'createdByRole': createdByRole,
+      'revision': revision,
+      'supersedesOfferId': supersedesOfferId,
+      'conditions': conditions,
+      'createdAt':
+          createdAt != null
+              ? Timestamp.fromDate(createdAt!)
+              : FieldValue.serverTimestamp(),
     };
   }
 
@@ -56,6 +82,12 @@ class OfferModel {
       proposedPrice: proposedPrice,
       message: message,
       status: status ?? this.status,
+      chatId: chatId,
+      createdById: createdById,
+      createdByRole: createdByRole,
+      revision: revision,
+      supersedesOfferId: supersedesOfferId,
+      conditions: conditions,
       createdAt: createdAt,
     );
   }

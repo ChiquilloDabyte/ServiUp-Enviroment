@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/repositories/auth_repository.dart';
+import '../../data/repositories/chat_repository.dart';
 import '../../data/repositories/notification_repository.dart';
 import '../../data/repositories/offer_repository.dart';
 import '../../data/repositories/offline_repository.dart';
@@ -13,26 +14,44 @@ import '../../data/services/connectivity_service.dart';
 import '../../data/services/firestore_service.dart';
 import '../../data/services/local_db_service.dart';
 import '../../data/services/location_service.dart';
+import '../../data/services/maps_config_service.dart';
 import '../../data/services/notification_service.dart';
+import '../../data/services/places_service.dart';
 import '../../data/services/storage_service.dart';
 import '../../data/services/sync_service.dart';
 import '../../models/user_model.dart';
+import '../../data/repositories/rating_repository.dart';
 
 final authServiceProvider = Provider<AuthService>((ref) => AuthService());
-final firestoreServiceProvider =
-    Provider<FirestoreService>((ref) => FirestoreService());
-final storageServiceProvider =
-    Provider<StorageService>((ref) => StorageService());
-final locationServiceProvider =
-    Provider<LocationService>((ref) => LocationService());
-final connectivityServiceProvider =
-    Provider<ConnectivityService>((ref) => ConnectivityService());
-final localDbServiceProvider =
-    Provider<LocalDbService>((ref) => LocalDbService());
-final notificationServiceProvider =
-    Provider<NotificationService>((ref) => NotificationService());
-final analyticsServiceProvider =
-    Provider<AnalyticsService>((ref) => AnalyticsService());
+final firestoreServiceProvider = Provider<FirestoreService>(
+  (ref) => FirestoreService(),
+);
+final storageServiceProvider = Provider<StorageService>(
+  (ref) => StorageService(),
+);
+final locationServiceProvider = Provider<LocationService>(
+  (ref) => LocationService(),
+);
+final mapsConfigServiceProvider = Provider<MapsConfigService>(
+  (ref) => MapsConfigService(),
+);
+final placesServiceProvider = Provider<PlacesService>((ref) {
+  return GooglePlacesService(
+    mapsConfigService: ref.watch(mapsConfigServiceProvider),
+  );
+});
+final connectivityServiceProvider = Provider<ConnectivityService>(
+  (ref) => ConnectivityService(),
+);
+final localDbServiceProvider = Provider<LocalDbService>(
+  (ref) => LocalDbService(),
+);
+final notificationServiceProvider = Provider<NotificationService>(
+  (ref) => NotificationService(),
+);
+final analyticsServiceProvider = Provider<AnalyticsService>(
+  (ref) => AnalyticsService(),
+);
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepository(
@@ -48,8 +67,9 @@ final userRepositoryProvider = Provider<UserRepository>((ref) {
   return UserRepository(firestoreService: ref.watch(firestoreServiceProvider));
 });
 
-final serviceRequestRepositoryProvider =
-    Provider<ServiceRequestRepository>((ref) {
+final serviceRequestRepositoryProvider = Provider<ServiceRequestRepository>((
+  ref,
+) {
   return ServiceRequestRepository(
     firestoreService: ref.watch(firestoreServiceProvider),
     locationService: ref.watch(locationServiceProvider),
@@ -57,19 +77,48 @@ final serviceRequestRepositoryProvider =
   );
 });
 
+final chatRepositoryProvider = Provider<ChatRepository>((ref) {
+  return ChatRepository(
+    firestoreService: ref.watch(firestoreServiceProvider),
+    storageService: ref.watch(storageServiceProvider),
+  );
+});
+
 final offerRepositoryProvider = Provider<OfferRepository>((ref) {
   return OfferRepository(
     firestoreService: ref.watch(firestoreServiceProvider),
     serviceRequestRepository: ref.watch(serviceRequestRepositoryProvider),
+    chatRepository: ref.watch(chatRepositoryProvider),
     analyticsService: ref.watch(analyticsServiceProvider),
   );
 });
 
-final notificationRepositoryProvider =
-    Provider<NotificationRepository>((ref) {
+final notificationRepositoryProvider = Provider<NotificationRepository>((ref) {
   return NotificationRepository(
     firestoreService: ref.watch(firestoreServiceProvider),
   );
+});
+
+final ratingRepositoryProvider = Provider<RatingRepository>((ref) {
+  return RatingRepository(
+    firestoreService: ref.watch(firestoreServiceProvider),
+  );
+});
+
+final providerRatingProvider =
+    StreamProvider.family<Map<String, dynamic>, String>((ref, providerId) {
+  return ref
+      .watch(ratingRepositoryProvider)
+      .watchProviderRating(providerId);
+});
+
+final hasRatedProvider = StreamProvider.family<bool, String>((ref, requestId) {
+  final firestore = ref.watch(firestoreServiceProvider);
+
+  return firestore.ratings
+      .where('requestId', isEqualTo: requestId)
+      .snapshots()
+      .map((snapshot) => snapshot.docs.isNotEmpty);
 });
 
 final offlineRepositoryProvider = Provider<OfflineRepository>((ref) {

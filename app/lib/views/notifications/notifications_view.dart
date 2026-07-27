@@ -39,16 +39,22 @@ class NotificationsView extends ConsumerWidget {
                 child: ListTile(
                   title: Text(notification.title),
                   subtitle: Text(notification.body),
-                  trailing: notification.read
-                      ? null
-                      : const Icon(Icons.fiber_manual_record, size: 12),
+                  trailing:
+                      notification.read
+                          ? null
+                          : const Icon(Icons.fiber_manual_record, size: 12),
                   onTap: () async {
                     await ref
                         .read(notificationActionsProvider)
                         .markAsRead(notification.id);
 
+                    final chatId = notification.payload['chatId'];
                     final requestId = notification.payload['requestId'];
-                    if (requestId is String && context.mounted) {
+                    if (chatId is String &&
+                        chatId.isNotEmpty &&
+                        context.mounted) {
+                      context.push('/chats/$chatId');
+                    } else if (requestId is String && context.mounted) {
                       context.push('/requests/$requestId');
                     }
                   },

@@ -14,9 +14,10 @@ class ClientHomeView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProfileProvider).value;
-    final requests = user == null
-        ? const AsyncValue<List<dynamic>>.loading()
-        : ref.watch(clientRequestsProvider(user.id));
+    final requests =
+        user == null
+            ? const AsyncValue<List<dynamic>>.loading()
+            : ref.watch(clientRequestsProvider(user.id));
     final hasConnection = ref.watch(hasConnectionProvider).value ?? true;
 
     return Scaffold(
@@ -29,15 +30,13 @@ class ClientHomeView extends ConsumerWidget {
             onPressed: () => context.push('/profile'),
           ),
           IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () => context.push('/notifications'),
+            icon: const Icon(Icons.chat_bubble_outline),
+            tooltip: 'Conversaciones',
+            onPressed: () => context.push('/chats'),
           ),
           IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await ref.read(authViewModelProvider.notifier).signOut();
-              if (context.mounted) context.go('/login');
-            },
+            icon: const Icon(Icons.notifications_outlined),
+            onPressed: () => context.push('/notifications'),
           ),
         ],
       ),
@@ -45,7 +44,9 @@ class ClientHomeView extends ConsumerWidget {
         children: [
           if (!hasConnection)
             MaterialBanner(
-              content: const Text('Sin conexión. Puedes ver prestadores offline.'),
+              content: const Text(
+                'Sin conexión. Puedes ver prestadores offline.',
+              ),
               actions: [
                 TextButton(
                   onPressed: () => context.push('/offline'),
@@ -56,9 +57,9 @@ class ClientHomeView extends ConsumerWidget {
           Expanded(
             child: requests.when(
               loading: () => const LoadingView(),
-              error: (error, _) => Center(
-                child: Text(repositoryErrorMessage(error)),
-              ),
+              error:
+                  (error, _) =>
+                      Center(child: Text(repositoryErrorMessage(error))),
               data: (items) {
                 if (items.isEmpty) {
                   return const Center(

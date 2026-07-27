@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/errors/app_exception.dart';
 import '../../models/service_request_model.dart';
 import '../providers/app_providers.dart';
+import '../../models/enums/request_status.dart';
 
 class ServiceRequestViewModel extends Notifier<AsyncValue<void>> {
   @override
@@ -43,6 +44,19 @@ class ServiceRequestViewModel extends Notifier<AsyncValue<void>> {
     state = await AsyncValue.guard(() async {
       await ref.read(serviceRequestRepositoryProvider).cancelRequest(requestId);
     });
+    if (state.hasError) throw state.error!;
+  }
+
+  Future<void> completeRequest(String requestId) async {
+    state = const AsyncLoading();
+
+    state = await AsyncValue.guard(() async {
+      await ref.read(serviceRequestRepositoryProvider).updateStatus(
+        requestId: requestId,
+        status: RequestStatus.completed,
+      );
+    });
+
     if (state.hasError) throw state.error!;
   }
 }
