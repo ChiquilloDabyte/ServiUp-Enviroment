@@ -47,7 +47,7 @@ class _CreateRequestViewState extends ConsumerState<CreateRequestView> {
     final updateId = ++_locationUpdateId;
     try {
       final location =
-          await ref.read(locationServiceProvider).getCurrentLocation();
+          await ref.read(locationRepositoryProvider).getCurrentLocation();
       if (!mounted || updateId != _locationUpdateId) return;
       setState(() {
         _latitude = location.latitude;
@@ -70,7 +70,7 @@ class _CreateRequestViewState extends ConsumerState<CreateRequestView> {
     });
 
     final address = await ref
-        .read(locationServiceProvider)
+        .read(locationRepositoryProvider)
         .getAddressFromCoordinates(latitude: latitude, longitude: longitude);
     if (!mounted || updateId != _locationUpdateId) return;
 
@@ -170,7 +170,7 @@ class _CreateRequestViewState extends ConsumerState<CreateRequestView> {
       });
       try {
         final location = await ref
-            .read(locationServiceProvider)
+            .read(locationRepositoryProvider)
             .getLocationFromAddress(_addressController.text);
         if (!mounted) return;
         setState(() {

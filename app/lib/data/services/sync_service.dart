@@ -1,9 +1,8 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../core/logger/app_logger.dart';
-import '../../models/enums/user_role.dart';
 import '../../models/local_provider_model.dart';
-import '../../models/user_model.dart';
+import '../../models/provider_public_profile_model.dart';
 import 'connectivity_service.dart';
 import 'firestore_service.dart';
 import 'local_db_service.dart';
@@ -13,16 +12,16 @@ class SyncService {
     required FirestoreService firestoreService,
     required LocalDbService localDbService,
     required ConnectivityService connectivityService,
-  })  : _firestoreService = firestoreService,
-        _localDbService = localDbService,
-        _connectivityService = connectivityService;
+  }) : _firestoreService = firestoreService,
+       _localDbService = localDbService,
+       _connectivityService = connectivityService;
 
   final FirestoreService _firestoreService;
   final LocalDbService _localDbService;
   final ConnectivityService _connectivityService;
 
-  Future<bool> syncProvidersIfOnline() async {
-    if (FirebaseAuth.instance.currentUser == null) {
+  Future<bool> syncProvidersIfOnline({required bool isSignedIn}) async {
+    if (!isSignedIn) {
       return false;
     }
 
@@ -31,24 +30,34 @@ class SyncService {
     }
 
     try {
-      final snapshot = await _firestoreService.users
-          .where('role', isEqualTo: UserRole.provider.value)
-          .where('profileComplete', isEqualTo: true)
-          .get();
+      const pageSize = 200;
+      final documents = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+      Query<Map<String, dynamic>> query = _firestoreService
+          .providerPublicProfiles
+          .orderBy(FieldPath.documentId)
+          .limit(pageSize);
+      while (true) {
+        final snapshot = await query.get();
+        documents.addAll(snapshot.docs);
+        if (snapshot.docs.length < pageSize) break;
+        query = query.startAfterDocument(snapshot.docs.last);
+      }
 
       final isar = await _localDbService.database;
-      final providers = snapshot.docs
-          .map(UserModel.fromFirestore)
-          .where((user) => user.phone.isNotEmpty)
-          .map(
-            (user) => LocalProvider()
-              ..firebaseId = user.id
-              ..name = user.name
-              ..phone = user.phone
-              ..categories = user.serviceCategories
-              ..lastSyncedAt = DateTime.now(),
-          )
-          .toList();
+      final providers =
+          documents
+              .map(ProviderPublicProfileModel.fromFirestore)
+              .where((profile) => profile.phone.isNotEmpty)
+              .map(
+                (profile) =>
+                    LocalProvider()
+                      ..firebaseId = profile.id
+                      ..name = profile.name
+                      ..phone = profile.phone
+                      ..categories = profile.serviceCategories
+                      ..lastSyncedAt = DateTime.now(),
+              )
+              .toList();
 
       await isar.writeTxn(() async {
         await isar.localProviders.clear();

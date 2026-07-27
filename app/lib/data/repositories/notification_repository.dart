@@ -1,9 +1,10 @@
+import '../../core/constants/app_constants.dart';
 import '../../models/notification_model.dart';
 import '../services/firestore_service.dart';
 
 class NotificationRepository {
   NotificationRepository({required FirestoreService firestoreService})
-      : _firestoreService = firestoreService;
+    : _firestoreService = firestoreService;
 
   final FirestoreService _firestoreService;
 
@@ -11,6 +12,7 @@ class NotificationRepository {
     return _firestoreService.notifications
         .where('userId', isEqualTo: userId)
         .orderBy('createdAt', descending: true)
+        .limit(AppConstants.defaultPageSize)
         .snapshots()
         .map(
           (snapshot) =>
@@ -22,26 +24,5 @@ class NotificationRepository {
     await _firestoreService.notifications.doc(notificationId).update({
       'read': true,
     });
-  }
-
-  Future<void> createNotification({
-    required String userId,
-    required String type,
-    required String title,
-    required String body,
-    Map<String, dynamic> payload = const {},
-  }) async {
-    final doc = _firestoreService.notifications.doc();
-    final notification = AppNotificationModel(
-      id: doc.id,
-      userId: userId,
-      type: type,
-      title: title,
-      body: body,
-      read: false,
-      payload: payload,
-      createdAt: DateTime.now(),
-    );
-    await doc.set(notification.toFirestore());
   }
 }

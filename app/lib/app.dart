@@ -56,6 +56,7 @@ class _ServiUpAppState extends ConsumerState<ServiUpApp> {
   @override
   Widget build(BuildContext context) {
     ref.watch(syncListenerProvider);
+    ref.watch(fcmTokenRefreshProvider);
     ref.listen(authStateProvider, (previous, next) {
       final previousUserId = previous?.value?.uid;
       final nextUserId = next.value?.uid;
@@ -65,6 +66,7 @@ class _ServiUpAppState extends ConsumerState<ServiUpApp> {
       ref.invalidate(clientRequestsProvider);
       ref.invalidate(openRequestsProvider);
       ref.invalidate(requestDetailProvider);
+      ref.invalidate(providerRequestDetailProvider);
       ref.invalidate(nearbyRequestsProvider);
       ref.invalidate(providerActiveJobsProvider);
       ref.invalidate(offerViewModelProvider);

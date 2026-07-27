@@ -2,6 +2,7 @@ enum RequestStatus {
   open('open'),
   accepted('accepted'),
   inProgress('in_progress'),
+  pendingConfirmation('pending_confirmation'),
   completed('completed'),
   cancelled('cancelled');
 
@@ -17,15 +18,17 @@ enum RequestStatus {
   }
 
   String get label => switch (this) {
-        RequestStatus.open => 'Abierta',
-        RequestStatus.accepted => 'Aceptada',
-        RequestStatus.inProgress => 'En progreso',
-        RequestStatus.completed => 'Completada',
-        RequestStatus.cancelled => 'Cancelada',
-      };
+    RequestStatus.open => 'Abierta',
+    RequestStatus.accepted => 'Aceptada',
+    RequestStatus.inProgress => 'En progreso',
+    RequestStatus.pendingConfirmation => 'Por confirmar',
+    RequestStatus.completed => 'Completada',
+    RequestStatus.cancelled => 'Cancelada',
+  };
 
   bool get isActive =>
       this == RequestStatus.open ||
       this == RequestStatus.accepted ||
-      this == RequestStatus.inProgress;
+      this == RequestStatus.inProgress ||
+      this == RequestStatus.pendingConfirmation;
 }

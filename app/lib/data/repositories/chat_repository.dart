@@ -9,16 +9,20 @@ import '../../models/chat_model.dart';
 import '../../models/enums/chat_status.dart';
 import '../../models/enums/message_type.dart';
 import '../services/firestore_service.dart';
+import '../services/cloud_functions_service.dart';
 import '../services/storage_service.dart';
 
 class ChatRepository {
   ChatRepository({
     required FirestoreService firestoreService,
+    required CloudFunctionsService cloudFunctionsService,
     required StorageService storageService,
   }) : _firestoreService = firestoreService,
+       _cloudFunctionsService = cloudFunctionsService,
        _storageService = storageService;
 
   final FirestoreService _firestoreService;
+  final CloudFunctionsService _cloudFunctionsService;
   final StorageService _storageService;
 
   static String chatIdFor(String requestId, String providerId) =>
@@ -29,32 +33,11 @@ class ChatRepository {
     required String clientId,
     required String providerId,
   }) async {
-    final chatId = chatIdFor(requestId, providerId);
-    final chatRef = _firestoreService.chats.doc(chatId);
-    final users = await Future.wait([
-      _firestoreService.users.doc(clientId).get(),
-      _firestoreService.users.doc(providerId).get(),
-    ]);
-
-    await _firestoreService.runTransaction((transaction) async {
-      final existing = await transaction.get(chatRef);
-      if (existing.exists) return;
-      transaction.set(chatRef, {
-        'requestId': requestId,
-        'clientId': clientId,
-        'providerId': providerId,
-        'clientName': users[0].data()?['name'] as String? ?? '',
-        'providerName': users[1].data()?['name'] as String? ?? '',
-        'status': ChatStatus.active.value,
-        'lastMessage': '',
-        'lastMessageAt': null,
-        'unreadByClient': 0,
-        'unreadByProvider': 0,
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+    final response = await _cloudFunctionsService.call('ensureChat', {
+      'requestId': requestId,
+      'providerId': providerId,
     });
-    return chatId;
+    return response['chatId'] as String;
   }
 
   Stream<ChatModel?> watchChat(String chatId) {
@@ -73,6 +56,7 @@ class ChatRepository {
           ),
         )
         .orderBy('updatedAt', descending: true)
+        .limit(AppConstants.defaultPageSize)
         .snapshots()
         .map((snapshot) => snapshot.docs.map(ChatModel.fromFirestore).toList());
   }

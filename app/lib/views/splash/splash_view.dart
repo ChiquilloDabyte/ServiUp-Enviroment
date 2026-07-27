@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:firebase_auth/firebase_auth.dart';
-
 import '../../core/constants/app_constants.dart';
 import '../../core/logger/app_logger.dart';
 import '../../core/theme/app_dimensions.dart';
@@ -37,7 +35,8 @@ class _SplashViewState extends ConsumerState<SplashView> {
 
   Future<void> _bootstrap() async {
     final notificationService = ref.read(notificationServiceProvider);
-    final syncService = ref.read(syncServiceProvider);
+    final syncService = ref.read(providerSyncRepositoryProvider);
+    final authRepository = ref.read(authRepositoryProvider);
 
     try {
       await notificationService.initialize();
@@ -50,16 +49,16 @@ class _SplashViewState extends ConsumerState<SplashView> {
     }
     if (!_isActive) return;
 
-    await FirebaseAuth.instance.authStateChanges().first;
+    await authRepository.authStateChanges().first;
     if (!_isActive) return;
 
-    if (FirebaseAuth.instance.currentUser != null) {
+    if (authRepository.currentUser != null) {
       await syncService.syncProvidersIfOnline();
     }
     if (!mounted) return;
     if (_bootstrapCancelled) return;
 
-    final user = FirebaseAuth.instance.currentUser;
+    final user = authRepository.currentUser;
     context.go(user == null ? '/login' : '/home');
   }
 

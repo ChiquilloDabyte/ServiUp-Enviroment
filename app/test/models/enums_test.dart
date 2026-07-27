@@ -22,6 +22,11 @@ void main() {
     test('completed is not active', () {
       expect(RequestStatus.completed.isActive, isFalse);
     });
+
+    test('pending confirmation stays active', () {
+      expect(RequestStatus.pendingConfirmation.isActive, isTrue);
+      expect(RequestStatus.pendingConfirmation.value, 'pending_confirmation');
+    });
   });
 
   group('OfferStatus', () {

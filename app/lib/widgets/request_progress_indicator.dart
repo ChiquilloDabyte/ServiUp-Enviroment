@@ -12,6 +12,7 @@ class RequestProgressIndicator extends StatelessWidget {
     RequestStatus.open => 0.25,
     RequestStatus.accepted => 0.5,
     RequestStatus.inProgress => 0.75,
+    RequestStatus.pendingConfirmation => 0.9,
     RequestStatus.completed || RequestStatus.cancelled => 1,
   };
 

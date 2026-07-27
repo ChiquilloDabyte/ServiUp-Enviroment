@@ -44,6 +44,14 @@ class AuthService {
 
   Future<void> signOut() => _auth.signOut();
 
+  Future<void> deleteCurrentUser() async {
+    try {
+      await _auth.currentUser?.delete();
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_mapAuthError(e), code: e.code);
+    }
+  }
+
   Future<void> sendPasswordResetEmail(String email) async {
     try {
       await _auth.sendPasswordResetEmail(email: email.trim());

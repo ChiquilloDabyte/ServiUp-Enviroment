@@ -71,6 +71,13 @@ final requestDetailProvider = StreamProvider.autoDispose
           .watchRequest(requestId);
     });
 
+final providerRequestDetailProvider = StreamProvider.autoDispose
+    .family<ServiceRequestModel?, String>((ref, requestId) {
+      return ref
+          .watch(serviceRequestRepositoryProvider)
+          .watchProviderRequest(requestId);
+    });
+
 final nearbyRequestsProvider = FutureProvider.autoDispose.family<
   List<ServiceRequestModel>,
   ({double lat, double lng, String? category})

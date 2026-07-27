@@ -17,6 +17,10 @@ class ServiceRequestModel {
     this.acceptedOfferId,
     this.price,
     this.createdAt,
+    this.completionRequestedAt,
+    this.completionReturnedAt,
+    this.completionReturnReason,
+    this.completedAt,
   });
 
   final String id;
@@ -32,6 +36,10 @@ class ServiceRequestModel {
   final String? acceptedOfferId;
   final double? price;
   final DateTime? createdAt;
+  final DateTime? completionRequestedAt;
+  final DateTime? completionReturnedAt;
+  final String? completionReturnReason;
+  final DateTime? completedAt;
 
   GeoPoint get location => GeoPoint(latitude, longitude);
 
@@ -56,6 +64,12 @@ class ServiceRequestModel {
       acceptedOfferId: data['acceptedOfferId'] as String?,
       price: (data['price'] as num?)?.toDouble(),
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
+      completionRequestedAt:
+          (data['completionRequestedAt'] as Timestamp?)?.toDate(),
+      completionReturnedAt:
+          (data['completionReturnedAt'] as Timestamp?)?.toDate(),
+      completionReturnReason: data['completionReturnReason'] as String?,
+      completedAt: (data['completedAt'] as Timestamp?)?.toDate(),
     );
   }
 
@@ -75,6 +89,13 @@ class ServiceRequestModel {
           createdAt != null
               ? Timestamp.fromDate(createdAt!)
               : FieldValue.serverTimestamp(),
+      if (completionRequestedAt != null)
+        'completionRequestedAt': Timestamp.fromDate(completionRequestedAt!),
+      if (completionReturnedAt != null)
+        'completionReturnedAt': Timestamp.fromDate(completionReturnedAt!),
+      if (completionReturnReason != null)
+        'completionReturnReason': completionReturnReason,
+      if (completedAt != null) 'completedAt': Timestamp.fromDate(completedAt!),
     };
   }
 
@@ -98,6 +119,10 @@ class ServiceRequestModel {
       acceptedOfferId: acceptedOfferId ?? this.acceptedOfferId,
       price: price ?? this.price,
       createdAt: createdAt,
+      completionRequestedAt: completionRequestedAt,
+      completionReturnedAt: completionReturnedAt,
+      completionReturnReason: completionReturnReason,
+      completedAt: completedAt,
     );
   }
 }

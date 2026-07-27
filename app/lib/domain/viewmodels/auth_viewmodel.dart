@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/errors/app_exception.dart';
 import '../../models/enums/user_role.dart';
+import '../../models/profile_update.dart';
 import '../../models/user_model.dart';
 import '../providers/app_providers.dart';
 
@@ -27,11 +28,9 @@ class AuthViewModel extends Notifier<AsyncValue<void>> {
     state = const AsyncLoading();
     late UserModel user;
     state = await AsyncValue.guard(() async {
-      user = await ref.read(authRepositoryProvider).signUp(
-            email: email,
-            password: password,
-            role: role,
-          );
+      user = await ref
+          .read(authRepositoryProvider)
+          .signUp(email: email, password: password, role: role);
     });
     if (state.hasError) throw state.error!;
     return user;
@@ -50,8 +49,9 @@ class AuthViewModel extends Notifier<AsyncValue<void>> {
   }
 }
 
-final authViewModelProvider =
-    NotifierProvider<AuthViewModel, AsyncValue<void>>(AuthViewModel.new);
+final authViewModelProvider = NotifierProvider<AuthViewModel, AsyncValue<void>>(
+  AuthViewModel.new,
+);
 
 class UserViewModel extends Notifier<AsyncValue<void>> {
   @override
@@ -71,10 +71,12 @@ class UserViewModel extends Notifier<AsyncValue<void>> {
     state = await AsyncValue.guard(() async {
       var photoUrl = user.photoUrl;
       if (avatarFile != null) {
-        photoUrl = await ref.read(authRepositoryProvider).uploadAvatar(avatarFile);
+        photoUrl = await ref
+            .read(authRepositoryProvider)
+            .uploadAvatar(avatarFile);
       }
 
-      final updated = user.copyWith(
+      final update = ProfileUpdate(
         name: name.trim(),
         phone: phone.trim(),
         serviceCategories: categories,
@@ -83,15 +85,38 @@ class UserViewModel extends Notifier<AsyncValue<void>> {
         photoUrl: photoUrl,
       );
 
-      await ref.read(userRepositoryProvider).saveProfile(updated);
+      await ref
+          .read(userRepositoryProvider)
+          .updateEditableProfile(
+            userId: user.id,
+            role: user.role,
+            update: update,
+          );
     });
 
     if (state.hasError) throw state.error!;
   }
+
+  Future<UserModel> createMissingProfile({
+    required String userId,
+    required String email,
+    required UserRole role,
+  }) async {
+    state = const AsyncLoading();
+    late UserModel user;
+    state = await AsyncValue.guard(() async {
+      user = await ref
+          .read(userRepositoryProvider)
+          .createMissingProfile(userId: userId, email: email, role: role);
+    });
+    if (state.hasError) throw state.error!;
+    return user;
+  }
 }
 
-final userViewModelProvider =
-    NotifierProvider<UserViewModel, AsyncValue<void>>(UserViewModel.new);
+final userViewModelProvider = NotifierProvider<UserViewModel, AsyncValue<void>>(
+  UserViewModel.new,
+);
 
 String authErrorMessage(Object error) {
   if (error is AppException) return error.message;

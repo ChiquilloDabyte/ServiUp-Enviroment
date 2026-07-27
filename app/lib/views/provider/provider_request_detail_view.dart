@@ -71,7 +71,7 @@ class _ProviderRequestDetailViewState
 
   @override
   Widget build(BuildContext context) {
-    final request = ref.watch(requestDetailProvider(widget.requestId));
+    final request = ref.watch(providerRequestDetailProvider(widget.requestId));
     final user = ref.watch(currentUserProfileProvider).value;
     final isLoading = ref.watch(offerViewModelProvider).isLoading;
     final providerOffers =
@@ -204,12 +204,22 @@ class _ProviderRequestDetailViewState
                             ? null
                             : () => ref
                                 .read(offerViewModelProvider.notifier)
-                                .markCompleted(
+                                .requestCompletion(
                                   requestId: item.id,
                                   providerId: user.id,
                                 ),
-                    icon: const Icon(Icons.check_circle_outline),
-                    label: const Text('Marcar como completado'),
+                    icon: const Icon(Icons.fact_check_outlined),
+                    label: const Text('Solicitar confirmación'),
+                  ),
+                ],
+                if (isAssignedProvider &&
+                    item.status == RequestStatus.pendingConfirmation) ...[
+                  const SizedBox(height: AppSpacing.gutter),
+                  const SectionCard(
+                    child: Text(
+                      'El cliente debe confirmar la finalización. '
+                      'Puedes seguir usando el chat mientras responde.',
+                    ),
                   ),
                 ],
               ],

@@ -310,3 +310,52 @@ deben descartarse sin confirmar su origen:
    `docs/architecture/`.
 5. Actualizar este archivo cuando cambien el estado, los bloqueos o las
    decisiones vigentes.
+
+## Actualización: estabilización previa al dashboard
+
+La rama de estabilización del núcleo parte del `develop` que ya contiene la
+nueva interfaz. Las pantallas principales de cliente y prestador quedan
+reservadas para el trabajo de dashboard y no forman parte de esta
+estabilización.
+
+Cambios de arquitectura y dominio:
+
+- `users` pasa a ser privado y los prestadores publican una proyección limitada
+  en `provider_public_profiles`.
+- Las solicitudes abiertas se consultan mediante
+  `open_request_listings`, que no expone la dirección ni las coordenadas
+  exactas a prestadores no asignados.
+- Propuestas, aceptación y transiciones del servicio se ejecutan mediante
+  Cloud Functions callable y transacciones.
+- El ciclo incorpora `pending_confirmation`: el prestador solicita cierre y el
+  cliente confirma o devuelve el servicio a `in_progress` con un motivo.
+- `reviews/{requestId}` queda reservado para una única calificación del cliente
+  después de completar el servicio. `rating` y `ratingCount` son agregados de
+  servidor.
+- App Check se inicializa en Flutter; su exigencia en producción se habilitará
+  gradualmente después de configurar y verificar los proveedores de cada
+  plataforma.
+- El directorio Isar se sincroniza desde `provider_public_profiles`.
+- Los listados crecientes exponen un tamaño de página predeterminado de 20.
+
+La integración futura de `juan-david` será un portado manual desde una rama
+nueva basada en `develop`; no se fusionará directamente. Sus vistas de perfil
+deben usar el contrato acotado `ProfileUpdate` y la interfaz de calificación
+debe respetar `reviews/{requestId}`.
+
+El orden de despliegue, la migración de proyecciones y la configuración de
+Maps/firma están documentados en
+`docs/architecture/core_stabilization.md`.
+
+Riesgos técnicos todavía controlados:
+
+- `npm audit --omit=dev` conserva ocho avisos moderados transitivos cuya única
+  corrección propuesta requiere actualizar `firebase-admin` a una versión
+  mayor; la vulnerabilidad alta y la baja corregibles sin salto mayor sí
+  quedaron resueltas en el lockfile.
+- Flutter advierte que próximamente dejará de soportar las versiones actuales
+  de Gradle, Android Gradle Plugin y Kotlin. El build Android sigue pasando,
+  pero esas actualizaciones deben realizarse juntas en una tarea de
+  compatibilidad separada.
+- La configuración iOS se preparó en Windows y debe validarse mediante build,
+  firma y notificaciones en un equipo macOS antes de distribuirse.

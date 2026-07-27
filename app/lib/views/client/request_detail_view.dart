@@ -22,6 +22,54 @@ class ClientRequestDetailView extends ConsumerWidget {
 
   final String requestId;
 
+  Future<void> _returnToProgress(BuildContext context, WidgetRef ref) async {
+    final controller = TextEditingController();
+    final reason = await showDialog<String>(
+      context: context,
+      builder:
+          (dialogContext) => AlertDialog(
+            title: const Text('Devolver al prestador'),
+            content: TextField(
+              controller: controller,
+              minLines: 3,
+              maxLines: 5,
+              maxLength: 500,
+              decoration: const InputDecoration(
+                labelText: 'Motivo',
+                helperText: 'Describe qué falta por completar.',
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Cancelar'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  final value = controller.text.trim();
+                  if (value.length >= 10) {
+                    Navigator.of(dialogContext).pop(value);
+                  }
+                },
+                child: const Text('Devolver'),
+              ),
+            ],
+          ),
+    );
+    controller.dispose();
+    if (reason == null || !context.mounted) return;
+    try {
+      await ref
+          .read(offerViewModelProvider.notifier)
+          .returnToProgress(requestId: requestId, reason: reason);
+    } catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(offerErrorMessage(error))));
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final request = ref.watch(requestDetailProvider(requestId));
@@ -49,6 +97,48 @@ class ClientRequestDetailView extends ConsumerWidget {
                   latitude: item.latitude,
                   longitude: item.longitude,
                 ),
+                if (item.status == RequestStatus.pendingConfirmation &&
+                    user?.id == item.clientId) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  SectionCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          'Confirma el servicio',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        const Text(
+                          'El prestador indicó que terminó. Confirma si el '
+                          'trabajo quedó listo o explica qué falta.',
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        FilledButton.icon(
+                          onPressed:
+                              () => ref
+                                  .read(offerViewModelProvider.notifier)
+                                  .confirmCompletion(requestId: item.id),
+                          icon: const Icon(Icons.check_circle_outline),
+                          label: const Text('Confirmar finalización'),
+                        ),
+                        TextButton(
+                          onPressed: () => _returnToProgress(context, ref),
+                          child: const Text('Todavía falta trabajo'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (item.completionReturnReason?.isNotEmpty ?? false) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  SectionCard(
+                    child: Text(
+                      'Último motivo de devolución: '
+                      '${item.completionReturnReason}',
+                    ),
+                  ),
+                ],
                 if (item.status != RequestStatus.cancelled) ...[
                   const SizedBox(height: AppSpacing.lg),
                   Text(

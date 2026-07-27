@@ -69,5 +69,9 @@ class NotificationService {
 
   Stream<RemoteMessage> get onMessage => FirebaseMessaging.onMessage;
 
+  Stream<String> get onTokenRefresh => _messaging.onTokenRefresh;
+
   Future<RemoteMessage?> getInitialMessage() => _messaging.getInitialMessage();
+
+  Future<void> deleteToken() => _messaging.deleteToken();
 }

@@ -88,6 +88,10 @@ class StatusChip extends StatelessWidget {
         colors.primaryContainer.withValues(alpha: 0.12),
         colors.primary,
       ),
+      RequestStatus.pendingConfirmation => (
+        colors.secondaryContainer,
+        colors.onSecondaryContainer,
+      ),
       RequestStatus.completed => (
         colors.primary.withValues(alpha: 0.10),
         colors.primary,

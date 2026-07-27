@@ -8,16 +8,15 @@ const {
   describe,
   test,
 } = require("node:test");
-const assert = require("node:assert/strict");
 const {
   assertFails,
   assertSucceeds,
   initializeTestEnvironment,
 } = require("@firebase/rules-unit-testing");
 const {
+  GeoPoint,
   doc,
   getDoc,
-  runTransaction,
   serverTimestamp,
   setDoc,
   updateDoc,
@@ -45,12 +44,62 @@ beforeEach(async () => {
   await testEnv.withSecurityRulesDisabled(async (context) => {
     const db = context.firestore();
     await Promise.all([
-      setDoc(doc(db, "users/client-1"), {role: "client"}),
-      setDoc(doc(db, "users/provider-1"), {role: "provider"}),
-      setDoc(doc(db, "users/outsider-1"), {role: "client"}),
+      setDoc(doc(db, "users/client-1"), {
+        email: "client@example.com",
+        role: "client",
+        name: "Cliente",
+        phone: "3000000000",
+        serviceCategories: [],
+        rating: 0,
+        ratingCount: 0,
+        profileComplete: true,
+      }),
+      setDoc(doc(db, "users/provider-1"), {
+        email: "provider@example.com",
+        role: "provider",
+        name: "Prestador",
+        phone: "3111111111",
+        serviceCategories: ["Plomería"],
+        rating: 0,
+        ratingCount: 0,
+        profileComplete: true,
+      }),
+      setDoc(doc(db, "users/outsider-1"), {
+        role: "client",
+        rating: 0,
+        ratingCount: 0,
+      }),
       setDoc(doc(db, `service_requests/${requestId}`), {
         clientId: "client-1",
+        category: "Plomería",
+        description: "Reparar una fuga de agua",
+        location: new GeoPoint(4.71, -74.07),
+        address: "Dirección exacta",
+        scheduledAt: new Date(),
         status: "open",
+        acceptedProviderId: null,
+        acceptedOfferId: null,
+        price: null,
+        createdAt: new Date(),
+      }),
+      setDoc(doc(db, `open_request_listings/${requestId}`), {
+        clientId: "client-1",
+        category: "Plomería",
+        description: "Reparar una fuga de agua",
+        location: new GeoPoint(4.71, -74.07),
+        address: "Ubicación aproximada",
+        scheduledAt: new Date(),
+        status: "open",
+        acceptedProviderId: null,
+        createdAt: new Date(),
+      }),
+      setDoc(doc(db, "provider_public_profiles/provider-1"), {
+        name: "Prestador",
+        phone: "3111111111",
+        serviceCategories: ["Plomería"],
+        rating: 0,
+        ratingCount: 0,
+        updatedAt: new Date(),
       }),
       setDoc(doc(db, `chats/${chatId}`), {
         requestId,
@@ -70,171 +119,147 @@ after(async () => {
   await testEnv.cleanup();
 });
 
-describe("reglas privadas de chat", () => {
-  test("permite crear el chat de la primera oferta", async () => {
-    const newChatId = `${requestId}_provider-2`;
-    await testEnv.withSecurityRulesDisabled(async (context) => {
-      await setDoc(doc(context.firestore(), "users/provider-2"), {
-        role: "provider",
-      });
-    });
-
-    const db = testEnv.authenticatedContext("provider-2").firestore();
-    const newChat = doc(db, `chats/${newChatId}`);
-    await assertSucceeds(getDoc(newChat));
-    await assertSucceeds(
-      setDoc(newChat, {
-        requestId,
-        clientId: "client-1",
-        providerId: "provider-2",
-        clientName: "Cliente",
-        providerName: "Prestador",
-        status: "active",
-        lastMessage: "",
-        lastMessageAt: null,
-        unreadByClient: 0,
-        unreadByProvider: 0,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      }),
-    );
-    await assertSucceeds(
-      setDoc(doc(db, "offers/first-offer"), {
-        requestId,
-        providerId: "provider-2",
-        proposedPrice: 90000,
-        message: "Primera oferta",
-        conditions: "Primera oferta",
-        status: "pending",
-        chatId: newChatId,
-        createdById: "provider-2",
-        createdByRole: "provider",
-        revision: 1,
-        supersedesOfferId: null,
-        createdAt: serverTimestamp(),
-      }),
-    );
+describe("perfiles privados y proyecciones", () => {
+  test("solo el propietario lee users", async () => {
+    const owner = testEnv.authenticatedContext("client-1").firestore();
+    const provider = testEnv.authenticatedContext("provider-1").firestore();
+    await assertSucceeds(getDoc(doc(owner, "users/client-1")));
+    await assertFails(getDoc(doc(provider, "users/client-1")));
   });
 
-  test("los participantes leen y escriben mensajes", async () => {
-    const db = testEnv.authenticatedContext("client-1").firestore();
-    await assertSucceeds(getDoc(doc(db, `chats/${chatId}`)));
-    await assertSucceeds(
-      setDoc(doc(db, `chats/${chatId}/messages/message-1`), {
-        senderId: "client-1",
-        type: "text",
-        text: "Necesito confirmar el horario.",
-        imageUrl: null,
-        createdAt: serverTimestamp(),
-      }),
-    );
-  });
-
-  test("un tercero no puede leer ni escribir", async () => {
-    const db = testEnv.authenticatedContext("outsider-1").firestore();
-    await assertFails(getDoc(doc(db, `chats/${chatId}`)));
-    await assertFails(
-      setDoc(doc(db, `chats/${chatId}/messages/message-2`), {
-        senderId: "outsider-1",
-        type: "text",
-        text: "Mensaje no autorizado.",
-        imageUrl: null,
-        createdAt: serverTimestamp(),
-      }),
-    );
-  });
-
-  test("rechaza mensajes que superan el límite", async () => {
+  test("el propietario no cambia rol ni calificación", async () => {
     const db = testEnv.authenticatedContext("provider-1").firestore();
+    await assertFails(updateDoc(doc(db, "users/provider-1"), {role: "client"}));
+    await assertFails(updateDoc(doc(db, "users/provider-1"), {rating: 5}));
+    await assertSucceeds(
+      updateDoc(doc(db, "users/provider-1"), {
+        name: "Prestador actualizado",
+      }),
+    );
+  });
+
+  test("un autenticado lee la proyección pero no la escribe", async () => {
+    const db = testEnv.authenticatedContext("client-1").firestore();
+    const profile = doc(db, "provider_public_profiles/provider-1");
+    await assertSucceeds(getDoc(profile));
+    await assertFails(updateDoc(profile, {rating: 5}));
+  });
+});
+
+describe("solicitudes privadas y listados", () => {
+  test("un prestador solo ve el listado aproximado", async () => {
+    const db = testEnv.authenticatedContext("provider-1").firestore();
+    await assertSucceeds(
+      getDoc(doc(db, `open_request_listings/${requestId}`)),
+    );
+    await assertFails(getDoc(doc(db, `service_requests/${requestId}`)));
+  });
+
+  test("solo un cliente crea solicitudes", async () => {
+    const payload = {
+      clientId: "client-1",
+      category: "Limpieza",
+      description: "Necesito una limpieza completa",
+      location: new GeoPoint(4.7, -74.1),
+      address: "Calle 1",
+      scheduledAt: new Date(),
+      status: "open",
+      acceptedProviderId: null,
+      acceptedOfferId: null,
+      price: null,
+      createdAt: serverTimestamp(),
+    };
+    const client = testEnv.authenticatedContext("client-1").firestore();
+    const provider = testEnv.authenticatedContext("provider-1").firestore();
+    await assertSucceeds(
+      setDoc(doc(client, "service_requests/request-2"), payload),
+    );
     await assertFails(
-      setDoc(doc(db, `chats/${chatId}/messages/message-3`), {
-        senderId: "provider-1",
-        type: "text",
-        text: "x".repeat(2001),
-        imageUrl: null,
-        createdAt: serverTimestamp(),
+      setDoc(doc(provider, "service_requests/request-3"), {
+        ...payload,
+        clientId: "provider-1",
+      }),
+    );
+  });
+
+  test("las transiciones directas están bloqueadas", async () => {
+    const db = testEnv.authenticatedContext("client-1").firestore();
+    await assertFails(
+      updateDoc(doc(db, `service_requests/${requestId}`), {
+        status: "cancelled",
       }),
     );
   });
 });
 
-describe("reglas de negociación", () => {
-  beforeEach(async () => {
-    await testEnv.withSecurityRulesDisabled(async (context) => {
-      const db = context.firestore();
-      await setDoc(doc(db, "offers/offer-1"), {
-        requestId,
-        providerId: "provider-1",
-        proposedPrice: 120000,
-        message: "Incluye materiales.",
-        conditions: "Incluye materiales.",
-        status: "pending",
-        chatId,
-        createdById: "provider-1",
-        createdByRole: "provider",
-        revision: 1,
-        supersedesOfferId: null,
-        createdAt: new Date(),
-      });
-    });
-  });
-
-  test("el creador no acepta su propia propuesta", async () => {
+describe("negociación y chat", () => {
+  test("ofertas y chats solo se crean desde Functions", async () => {
     const db = testEnv.authenticatedContext("provider-1").firestore();
     await assertFails(
-      updateDoc(doc(db, "offers/offer-1"), {status: "accepted"}),
-    );
-  });
-
-  test("la contraparte acepta oferta y solicitud atómicamente", async () => {
-    const db = testEnv.authenticatedContext("client-1").firestore();
-    await assertSucceeds(
-      runTransaction(db, async (transaction) => {
-        transaction.update(doc(db, "offers/offer-1"), {
-          status: "accepted",
-        });
-        transaction.update(doc(db, `service_requests/${requestId}`), {
-          status: "accepted",
-          acceptedProviderId: "provider-1",
-          acceptedOfferId: "offer-1",
-          price: 120000,
-        });
-      }),
-    );
-    const request = await getDoc(doc(db, `service_requests/${requestId}`));
-    assert.equal(request.data().acceptedOfferId, "offer-1");
-  });
-
-  test("el proveedor puede aceptar una contraoferta del cliente", async () => {
-    await testEnv.withSecurityRulesDisabled(async (context) => {
-      await setDoc(doc(context.firestore(), "offers/client-offer"), {
+      setDoc(doc(db, "offers/offer-1"), {
         requestId,
         providerId: "provider-1",
-        proposedPrice: 100000,
-        message: "Contraoferta",
-        conditions: "Contraoferta",
         status: "pending",
-        chatId,
-        createdById: "client-1",
-        createdByRole: "client",
-        revision: 2,
-        supersedesOfferId: "offer-1",
-        createdAt: new Date(),
-      });
-    });
+      }),
+    );
+    await assertFails(
+      setDoc(doc(db, "chats/new-chat"), {
+        requestId,
+        clientId: "client-1",
+        providerId: "provider-1",
+      }),
+    );
+  });
 
-    const db = testEnv.authenticatedContext("provider-1").firestore();
+  test("los participantes escriben mensajes y terceros no", async () => {
+    const client = testEnv.authenticatedContext("client-1").firestore();
+    const outsider = testEnv.authenticatedContext("outsider-1").firestore();
+    const message = {
+      senderId: "client-1",
+      type: "text",
+      text: "Necesito confirmar el horario.",
+      imageUrl: null,
+      createdAt: serverTimestamp(),
+    };
     await assertSucceeds(
-      runTransaction(db, async (transaction) => {
-        transaction.update(doc(db, "offers/client-offer"), {
-          status: "accepted",
-        });
-        transaction.update(doc(db, `service_requests/${requestId}`), {
-          status: "accepted",
+      setDoc(doc(client, `chats/${chatId}/messages/message-1`), message),
+    );
+    await assertFails(
+      setDoc(doc(outsider, `chats/${chatId}/messages/message-2`), {
+        ...message,
+        senderId: "outsider-1",
+      }),
+    );
+  });
+});
+
+describe("calificaciones reservadas", () => {
+  test("solo el cliente del servicio completado crea una reseña", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await updateDoc(
+        doc(context.firestore(), `service_requests/${requestId}`),
+        {
+          status: "completed",
           acceptedProviderId: "provider-1",
-          acceptedOfferId: "client-offer",
-          price: 100000,
-        });
+        },
+      );
+    });
+    const client = testEnv.authenticatedContext("client-1").firestore();
+    const provider = testEnv.authenticatedContext("provider-1").firestore();
+    const review = {
+      requestId,
+      clientId: "client-1",
+      providerId: "provider-1",
+      rating: 5,
+      comment: "Excelente servicio",
+      createdAt: serverTimestamp(),
+    };
+    await assertSucceeds(setDoc(doc(client, `reviews/${requestId}`), review));
+    await assertFails(
+      setDoc(doc(provider, "reviews/other-request"), {
+        ...review,
+        requestId: "other-request",
+        clientId: "provider-1",
       }),
     );
   });

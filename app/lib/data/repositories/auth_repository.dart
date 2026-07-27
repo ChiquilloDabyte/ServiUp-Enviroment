@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../core/errors/app_exception.dart';
+import '../../core/logger/app_logger.dart';
 import '../../models/enums/user_role.dart';
 import '../../models/user_model.dart';
 import '../services/analytics_service.dart';
@@ -37,7 +38,7 @@ class AuthRepository {
 
   Future<void> signIn(String email, String password) async {
     await _authService.signIn(email: email, password: password);
-    await _saveFcmToken();
+    await syncFcmToken();
   }
 
   Future<UserModel> signUp({
@@ -61,30 +62,69 @@ class AuthRepository {
       name: '',
       phone: '',
       profileComplete: false,
-      createdAt: DateTime.now(),
     );
 
-    await _firestoreService.users.doc(user.uid).set(model.toFirestore());
-    await _analyticsService.logSignUp(role.value);
-    await _saveFcmToken();
+    try {
+      await _firestoreService.users.doc(user.uid).set(model.toFirestore());
+    } catch (error, stackTrace) {
+      try {
+        await _authService.deleteCurrentUser();
+      } catch (rollbackError, rollbackStack) {
+        AppLogger.error(
+          'Could not roll back incomplete sign-up',
+          rollbackError,
+          rollbackStack,
+        );
+      }
+      Error.throwWithStackTrace(error, stackTrace);
+    }
+    try {
+      await _analyticsService.logSignUp(role.value);
+    } catch (error, stackTrace) {
+      AppLogger.warning('Sign-up analytics failed', error, stackTrace);
+    }
+    await syncFcmToken();
 
     return model;
   }
 
-  Future<void> signOut() => _authService.signOut();
+  Future<void> signOut() async {
+    final uid = currentUser?.uid;
+    if (uid != null) {
+      try {
+        await _firestoreService.users.doc(uid).update({
+          'fcmToken': FieldValue.delete(),
+        });
+      } catch (error, stackTrace) {
+        AppLogger.warning('Could not clear FCM token', error, stackTrace);
+      }
+      try {
+        await _notificationService.deleteToken();
+      } catch (error, stackTrace) {
+        AppLogger.warning(
+          'Could not delete the local FCM token',
+          error,
+          stackTrace,
+        );
+      }
+    }
+    await _authService.signOut();
+  }
 
   Future<void> sendPasswordResetEmail(String email) =>
       _authService.sendPasswordResetEmail(email);
 
-  Future<void> _saveFcmToken() async {
+  Future<void> syncFcmToken([String? refreshedToken]) async {
     final uid = currentUser?.uid;
-    final token = await _notificationService.getToken();
+    final token = refreshedToken ?? await _notificationService.getToken();
     if (uid == null || token == null) return;
 
     await _firestoreService.users.doc(uid).set({
       'fcmToken': token,
     }, SetOptions(merge: true));
   }
+
+  Stream<String> get onFcmTokenRefresh => _notificationService.onTokenRefresh;
 
   Future<String> uploadAvatar(File file) async {
     final uid = currentUser?.uid;

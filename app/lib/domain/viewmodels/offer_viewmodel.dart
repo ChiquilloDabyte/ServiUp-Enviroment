@@ -89,7 +89,7 @@ class OfferViewModel extends Notifier<AsyncValue<void>> {
     if (state.hasError) throw state.error!;
   }
 
-  Future<void> markCompleted({
+  Future<void> requestCompletion({
     required String requestId,
     required String providerId,
   }) async {
@@ -97,7 +97,28 @@ class OfferViewModel extends Notifier<AsyncValue<void>> {
     state = await AsyncValue.guard(() async {
       await ref
           .read(offerRepositoryProvider)
-          .markCompleted(requestId, providerId);
+          .requestCompletion(requestId, providerId);
+    });
+    if (state.hasError) throw state.error!;
+  }
+
+  Future<void> confirmCompletion({required String requestId}) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      await ref.read(offerRepositoryProvider).confirmCompletion(requestId);
+    });
+    if (state.hasError) throw state.error!;
+  }
+
+  Future<void> returnToProgress({
+    required String requestId,
+    required String reason,
+  }) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      await ref
+          .read(offerRepositoryProvider)
+          .returnToProgress(requestId, reason);
     });
     if (state.hasError) throw state.error!;
   }

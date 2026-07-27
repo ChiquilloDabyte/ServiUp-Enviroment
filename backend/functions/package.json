@@ -3,7 +3,9 @@
   "scripts": {
     "lint": "eslint --ext .js,.ts .",
     "build": "tsc",
-    "test:rules": "node --test test/rules.test.js",
+    "test:rules": "firebase emulators:exec --only firestore \"node --test test/rules.test.js\"",
+    "test:functions": "firebase emulators:exec --only firestore \"node --test test/functions.test.js\"",
+    "migrate:projections": "npm run build && node lib/migrate_projections.js",
     "build:watch": "tsc --watch",
     "serve": "npm run build && firebase emulators:start --only functions",
     "shell": "npm run build && firebase functions:shell",

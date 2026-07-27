@@ -1,9 +1,20 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
     id("com.google.gms.google-services")
     id("com.google.firebase.crashlytics")
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use(::load)
+}
+val signingProperties = Properties().apply {
+    val file = rootProject.file("key.properties")
+    if (file.exists()) file.inputStream().use(::load)
 }
 
 android {
@@ -26,11 +37,27 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders["MAPS_API_KEY"] =
+            providers.gradleProperty("MAPS_API_KEY").orNull
+                ?: localProperties.getProperty("MAPS_API_KEY", "")
+    }
+
+    signingConfigs {
+        if (signingProperties.isNotEmpty()) {
+            create("release") {
+                keyAlias = signingProperties.getProperty("keyAlias")
+                keyPassword = signingProperties.getProperty("keyPassword")
+                storeFile = file(signingProperties.getProperty("storeFile"))
+                storePassword = signingProperties.getProperty("storePassword")
+            }
+        }
     }
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("debug")
+            if (signingProperties.isNotEmpty()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 }

@@ -55,7 +55,7 @@ class ChatViewModel extends Notifier<AsyncValue<void>> {
 
   Future<void> _runOnline(Future<void> Function() action) async {
     final hasConnection =
-        await ref.read(connectivityServiceProvider).hasConnection();
+        await ref.read(connectivityRepositoryProvider).hasConnection();
     if (!hasConnection) {
       throw const RepositoryException(
         'Necesitas conexión para enviar mensajes.',

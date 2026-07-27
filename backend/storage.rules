@@ -36,7 +36,8 @@ service firebase.storage {
         && requestForChat(chatId).status in [
           'open',
           'accepted',
-          'in_progress'
+          'in_progress',
+          'pending_confirmation'
         ]
         && request.resource.size < 5 * 1024 * 1024
         && request.resource.contentType.matches('image/.*')

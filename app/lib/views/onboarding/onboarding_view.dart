@@ -29,6 +29,7 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
   final _selectedCategories = <String>{};
   File? _avatarFile;
   String? _error;
+  UserRole _recoveryRole = UserRole.client;
 
   @override
   void dispose() {
@@ -55,7 +56,7 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
 
     try {
       final location =
-          await ref.read(locationServiceProvider).getCurrentLocation();
+          await ref.read(locationRepositoryProvider).getCurrentLocation();
       await ref
           .read(userViewModelProvider.notifier)
           .saveProfile(
@@ -70,6 +71,23 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
       if (mounted) context.go('/home');
     } catch (e) {
       setState(() => _error = authErrorMessage(e));
+    }
+  }
+
+  Future<void> _recoverMissingProfile() async {
+    final authUser = ref.read(authStateProvider).value;
+    if (authUser == null) return;
+    setState(() => _error = null);
+    try {
+      await ref
+          .read(userViewModelProvider.notifier)
+          .createMissingProfile(
+            userId: authUser.uid,
+            email: authUser.email ?? '',
+            role: _recoveryRole,
+          );
+    } catch (error) {
+      if (mounted) setState(() => _error = authErrorMessage(error));
     }
   }
 
@@ -91,9 +109,52 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
               ),
           data: (user) {
             if (user == null) {
-              return const EmptyState(
-                icon: Icons.person_off_outlined,
-                title: 'Sesión no disponible',
+              return ResponsiveContent(
+                maxWidth: 560,
+                child: SectionCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'Recupera tu perfil',
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      const Text(
+                        'Tu sesión está activa, pero falta el perfil. '
+                        'Selecciona el tipo de cuenta para reconstruirlo.',
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      SegmentedButton<UserRole>(
+                        segments: const [
+                          ButtonSegment(
+                            value: UserRole.client,
+                            label: Text('Cliente'),
+                            icon: Icon(Icons.person_outline),
+                          ),
+                          ButtonSegment(
+                            value: UserRole.provider,
+                            label: Text('Prestador'),
+                            icon: Icon(Icons.handyman_outlined),
+                          ),
+                        ],
+                        selected: {_recoveryRole},
+                        onSelectionChanged:
+                            (roles) =>
+                                setState(() => _recoveryRole = roles.first),
+                      ),
+                      if (_error != null) ...[
+                        const SizedBox(height: AppSpacing.sm),
+                        ErrorBanner(message: _error!),
+                      ],
+                      const SizedBox(height: AppSpacing.md),
+                      FilledButton(
+                        onPressed: isLoading ? null : _recoverMissingProfile,
+                        child: Text(isLoading ? 'Recuperando...' : 'Continuar'),
+                      ),
+                    ],
+                  ),
+                ),
               );
             }
 

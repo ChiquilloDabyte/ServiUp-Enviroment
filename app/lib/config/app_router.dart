@@ -37,9 +37,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           state.matchedLocation == '/login' ||
           state.matchedLocation == '/register' ||
           state.matchedLocation == '/forgot-password';
+      final isPublicLegal =
+          state.matchedLocation == '/terms' ||
+          state.matchedLocation == '/privacy';
 
       if (user == null) {
-        return loggingIn ? null : '/login';
+        return loggingIn || isPublicLegal ? null : '/login';
       }
 
       if (loggingIn) {
@@ -47,7 +50,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
 
       final userProfile = profile.value;
-      if (userProfile != null && !userProfile.profileComplete) {
+      if (profile.hasValue &&
+          (userProfile == null || !userProfile.profileComplete)) {
         return state.matchedLocation == '/onboarding' ? null : '/onboarding';
       }
 

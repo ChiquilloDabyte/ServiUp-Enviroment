@@ -14,6 +14,7 @@ class UserModel {
     this.longitude,
     this.serviceCategories = const [],
     this.rating = 0,
+    this.ratingCount = 0,
     this.profileComplete = false,
     this.fcmToken,
     this.createdAt,
@@ -29,6 +30,7 @@ class UserModel {
   final double? longitude;
   final List<String> serviceCategories;
   final double rating;
+  final int ratingCount;
   final bool profileComplete;
   final String? fcmToken;
   final DateTime? createdAt;
@@ -55,6 +57,7 @@ class UserModel {
       longitude: location?.longitude,
       serviceCategories: List<String>.from(data['serviceCategories'] ?? []),
       rating: (data['rating'] as num?)?.toDouble() ?? 0,
+      ratingCount: data['ratingCount'] as int? ?? 0,
       profileComplete: data['profileComplete'] as bool? ?? false,
       fcmToken: data['fcmToken'] as String?,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
@@ -71,11 +74,13 @@ class UserModel {
       if (location != null) 'location': location,
       'serviceCategories': serviceCategories,
       'rating': rating,
+      'ratingCount': ratingCount,
       'profileComplete': profileComplete,
       'fcmToken': fcmToken,
-      'createdAt': createdAt != null
-          ? Timestamp.fromDate(createdAt!)
-          : FieldValue.serverTimestamp(),
+      'createdAt':
+          createdAt != null
+              ? Timestamp.fromDate(createdAt!)
+              : FieldValue.serverTimestamp(),
     };
   }
 
@@ -87,6 +92,7 @@ class UserModel {
     double? longitude,
     List<String>? serviceCategories,
     double? rating,
+    int? ratingCount,
     bool? profileComplete,
     String? fcmToken,
   }) {
@@ -101,6 +107,7 @@ class UserModel {
       longitude: longitude ?? this.longitude,
       serviceCategories: serviceCategories ?? this.serviceCategories,
       rating: rating ?? this.rating,
+      ratingCount: ratingCount ?? this.ratingCount,
       profileComplete: profileComplete ?? this.profileComplete,
       fcmToken: fcmToken ?? this.fcmToken,
       createdAt: createdAt,

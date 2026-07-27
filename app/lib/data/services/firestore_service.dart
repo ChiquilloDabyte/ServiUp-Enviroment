@@ -15,8 +15,14 @@ class FirestoreService {
   CollectionReference<Map<String, dynamic>> get users =>
       collection(AppConstants.usersCollection);
 
+  CollectionReference<Map<String, dynamic>> get providerPublicProfiles =>
+      collection(AppConstants.providerPublicProfilesCollection);
+
   CollectionReference<Map<String, dynamic>> get serviceRequests =>
       collection(AppConstants.serviceRequestsCollection);
+
+  CollectionReference<Map<String, dynamic>> get openRequestListings =>
+      collection(AppConstants.openRequestListingsCollection);
 
   CollectionReference<Map<String, dynamic>> get offers =>
       collection(AppConstants.offersCollection);
@@ -26,6 +32,9 @@ class FirestoreService {
 
   CollectionReference<Map<String, dynamic>> get notifications =>
       collection(AppConstants.notificationsCollection);
+
+  CollectionReference<Map<String, dynamic>> get reviews =>
+      collection(AppConstants.reviewsCollection);
 
   Future<void> runBatch(void Function(WriteBatch batch) action) async {
     final batch = _firestore.batch();
