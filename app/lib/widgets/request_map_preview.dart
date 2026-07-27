@@ -3,6 +3,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import '../core/theme/app_dimensions.dart';
+
 class RequestMapPreview extends StatelessWidget {
   const RequestMapPreview({
     super.key,
@@ -17,20 +19,33 @@ class RequestMapPreview extends StatelessWidget {
   Widget build(BuildContext context) {
     final position = LatLng(latitude, longitude);
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: SizedBox(
-        height: 180,
-        child: GoogleMap(
-          initialCameraPosition: CameraPosition(target: position, zoom: 15),
-          markers: {
-            Marker(markerId: const MarkerId('request'), position: position),
-          },
-          zoomControlsEnabled: false,
-          myLocationButtonEnabled: false,
-          gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
-            Factory<OneSequenceGestureRecognizer>(EagerGestureRecognizer.new),
-          },
+    final colors = Theme.of(context).colorScheme;
+
+    return Semantics(
+      label: 'Mapa de la ubicación del servicio',
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: AppRadius.serviceCard,
+          border: Border.all(color: colors.primary.withValues(alpha: 0.12)),
+        ),
+        child: ClipRRect(
+          borderRadius: AppRadius.serviceCard,
+          child: SizedBox(
+            height: 200,
+            child: GoogleMap(
+              initialCameraPosition: CameraPosition(target: position, zoom: 15),
+              markers: {
+                Marker(markerId: const MarkerId('request'), position: position),
+              },
+              zoomControlsEnabled: false,
+              myLocationButtonEnabled: false,
+              gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+                Factory<OneSequenceGestureRecognizer>(
+                  EagerGestureRecognizer.new,
+                ),
+              },
+            ),
+          ),
         ),
       ),
     );

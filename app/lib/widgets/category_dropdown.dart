@@ -15,14 +15,19 @@ class CategoryDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<String>(
-      value: value,
-      decoration: const InputDecoration(labelText: 'Categoría'),
-      items: AppConstants.serviceCategories
-          .map((category) => DropdownMenuItem(
-                value: category,
-                child: Text(category),
-              ))
-          .toList(),
+      initialValue: value,
+      decoration: const InputDecoration(
+        labelText: 'Categoría',
+        prefixIcon: Icon(Icons.handyman_outlined),
+      ),
+      isExpanded: true,
+      items:
+          AppConstants.serviceCategories
+              .map(
+                (category) =>
+                    DropdownMenuItem(value: category, child: Text(category)),
+              )
+              .toList(),
       onChanged: onChanged,
     );
   }

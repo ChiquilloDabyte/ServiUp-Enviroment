@@ -4,16 +4,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../core/theme/app_dimensions.dart';
 import '../../domain/providers/app_providers.dart';
 import '../../domain/viewmodels/chat_viewmodel.dart';
 import '../../domain/viewmodels/offer_viewmodel.dart';
 import '../../models/chat_model.dart';
 import '../../models/enums/chat_status.dart';
-import '../../models/enums/message_type.dart';
-import '../../models/enums/offer_status.dart';
 import '../../models/offer_model.dart';
-import '../../utils/formatters.dart';
+import '../../widgets/chat/chat_composer.dart';
+import '../../widgets/chat/chat_messages_list.dart';
+import '../../widgets/chat/chat_offer_panel.dart';
+import '../../widgets/chat/proposal_dialog.dart';
 import '../../widgets/loading_view.dart';
+import '../../widgets/responsive_content.dart';
 
 class ChatView extends ConsumerStatefulWidget {
   const ChatView({super.key, required this.chatId});
@@ -66,9 +69,9 @@ class _ChatViewState extends ConsumerState<ChatView> {
   }
 
   Future<void> _showProposalDialog(ChatModel chat, String userId) async {
-    final result = await showDialog<({double price, String conditions})>(
+    final result = await showDialog<ProposalResult>(
       context: context,
-      builder: (context) => const _ProposalDialog(),
+      builder: (context) => const ProposalDialog(),
     );
     if (result == null) return;
 
@@ -144,135 +147,53 @@ class _ChatViewState extends ConsumerState<ChatView> {
                   .markAsRead(chat, currentUser.id);
             });
           }
+
           final writable = chat.status == ChatStatus.active;
-          return Column(
-            children: [
-              offers.when(
-                loading: () => const LinearProgressIndicator(),
-                error: (_, _) => const SizedBox.shrink(),
-                data:
-                    (items) => _OfferPanel(
-                      offers: items,
-                      userId: currentUser.id,
-                      writable: writable,
-                      onNewProposal:
-                          () => _showProposalDialog(chat, currentUser.id),
-                      onAccept: (offer) => _accept(offer, currentUser.id),
-                      onReject: (offer) => _reject(offer, currentUser.id),
-                    ),
-              ),
-              Expanded(
-                child: messages.when(
-                  loading: () => const LoadingView(),
-                  error:
-                      (error, _) =>
-                          Center(child: Text(chatErrorMessage(error))),
-                  data: (items) {
-                    final canLoadOlder = items.length >= _messageLimit;
-                    return ListView.builder(
-                      padding: const EdgeInsets.all(12),
-                      itemCount: items.length + (canLoadOlder ? 1 : 0),
-                      itemBuilder: (context, index) {
-                        if (canLoadOlder && index == 0) {
-                          return Center(
-                            child: TextButton(
-                              onPressed: () {
-                                setState(() => _messageLimit += 50);
-                              },
-                              child: const Text('Cargar mensajes anteriores'),
-                            ),
-                          );
-                        }
-                        final message = items[index - (canLoadOlder ? 1 : 0)];
-                        final own = message.senderId == currentUser.id;
-                        return Align(
-                          alignment:
-                              own
-                                  ? Alignment.centerRight
-                                  : Alignment.centerLeft,
-                          child: Container(
-                            constraints: const BoxConstraints(maxWidth: 300),
-                            margin: const EdgeInsets.symmetric(vertical: 4),
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color:
-                                  own
-                                      ? Theme.of(
-                                        context,
-                                      ).colorScheme.primaryContainer
-                                      : Theme.of(
-                                        context,
-                                      ).colorScheme.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child:
-                                message.type == MessageType.image &&
-                                        message.imageUrl != null
-                                    ? ClipRRect(
-                                      borderRadius: BorderRadius.circular(10),
-                                      child: Image.network(
-                                        message.imageUrl!,
-                                        fit: BoxFit.cover,
-                                        errorBuilder:
-                                            (_, _, _) => const Text(
-                                              'Imagen no disponible',
-                                            ),
-                                      ),
-                                    )
-                                    : Text(message.text),
-                          ),
-                        );
-                      },
-                    );
-                  },
+          return ResponsiveContent(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                offers.when(
+                  loading: () => const LinearProgressIndicator(minHeight: 4),
+                  error: (_, _) => const SizedBox.shrink(),
+                  data:
+                      (items) => ChatOfferPanel(
+                        offers: items,
+                        userId: currentUser.id,
+                        writable: writable,
+                        onNewProposal:
+                            () => _showProposalDialog(chat, currentUser.id),
+                        onAccept: (offer) => _accept(offer, currentUser.id),
+                        onReject: (offer) => _reject(offer, currentUser.id),
+                      ),
                 ),
-              ),
-              if (!writable)
-                const MaterialBanner(
-                  content: Text(
-                    'Esta conversación está disponible solo para lectura.',
-                  ),
-                  actions: [SizedBox.shrink()],
-                )
-              else
-                SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
-                    child: Row(
-                      children: [
-                        IconButton(
-                          tooltip: 'Enviar imagen',
-                          onPressed:
-                              sending
-                                  ? null
-                                  : () => _sendImage(chat, currentUser.id),
-                          icon: const Icon(Icons.image_outlined),
+                Expanded(
+                  child: messages.when(
+                    loading: () => const LoadingView(),
+                    error:
+                        (error, _) =>
+                            Center(child: Text(chatErrorMessage(error))),
+                    data:
+                        (items) => ChatMessagesList(
+                          messages: items,
+                          currentUserId: currentUser.id,
+                          canLoadOlder: items.length >= _messageLimit,
+                          onLoadOlder:
+                              () => setState(() => _messageLimit += 50),
                         ),
-                        Expanded(
-                          child: TextField(
-                            controller: _messageController,
-                            maxLength: 2000,
-                            minLines: 1,
-                            maxLines: 4,
-                            decoration: const InputDecoration(
-                              hintText: 'Escribe un mensaje',
-                              counterText: '',
-                            ),
-                          ),
-                        ),
-                        IconButton.filled(
-                          tooltip: 'Enviar',
-                          onPressed:
-                              sending
-                                  ? null
-                                  : () => _sendText(chat, currentUser.id),
-                          icon: const Icon(Icons.send),
-                        ),
-                      ],
-                    ),
                   ),
                 ),
-            ],
+                if (!writable)
+                  const _ReadOnlyNotice()
+                else
+                  ChatComposer(
+                    controller: _messageController,
+                    sending: sending,
+                    onSendImage: () => _sendImage(chat, currentUser.id),
+                    onSendText: () => _sendText(chat, currentUser.id),
+                  ),
+              ],
+            ),
           );
         },
       ),
@@ -280,143 +201,46 @@ class _ChatViewState extends ConsumerState<ChatView> {
   }
 }
 
-class _ProposalDialog extends StatefulWidget {
-  const _ProposalDialog();
-
-  @override
-  State<_ProposalDialog> createState() => _ProposalDialogState();
-}
-
-class _ProposalDialogState extends State<_ProposalDialog> {
-  final _priceController = TextEditingController();
-  final _conditionsController = TextEditingController();
-
-  @override
-  void dispose() {
-    _priceController.dispose();
-    _conditionsController.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    final price = double.tryParse(_priceController.text.replaceAll(',', '.'));
-    if (price == null || price <= 0) return;
-    Navigator.pop(context, (
-      price: price,
-      conditions: _conditionsController.text,
-    ));
-  }
+class _ReadOnlyNotice extends StatelessWidget {
+  const _ReadOnlyNotice();
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Nueva propuesta'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: _priceController,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(labelText: 'Precio'),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _conditionsController,
-            maxLines: 3,
-            decoration: const InputDecoration(
-              labelText: 'Condiciones o detalles',
-            ),
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancelar'),
+    final colors = Theme.of(context).colorScheme;
+
+    return SafeArea(
+      top: false,
+      child: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.fromLTRB(
+          AppSpacing.mobileMargin,
+          AppSpacing.xs,
+          AppSpacing.mobileMargin,
+          AppSpacing.sm,
         ),
-        FilledButton(onPressed: _submit, child: const Text('Enviar')),
-      ],
-    );
-  }
-}
-
-class _OfferPanel extends StatelessWidget {
-  const _OfferPanel({
-    required this.offers,
-    required this.userId,
-    required this.writable,
-    required this.onNewProposal,
-    required this.onAccept,
-    required this.onReject,
-  });
-
-  final List<OfferModel> offers;
-  final String userId;
-  final bool writable;
-  final VoidCallback onNewProposal;
-  final ValueChanged<OfferModel> onAccept;
-  final ValueChanged<OfferModel> onReject;
-
-  @override
-  Widget build(BuildContext context) {
-    final active =
-        offers
-            .where((offer) => offer.status == OfferStatus.pending)
-            .firstOrNull;
-    return Card(
-      margin: const EdgeInsets.all(8),
-      child: ExpansionTile(
-        leading: const Icon(Icons.handshake_outlined),
-        title: Text(
-          active == null
-              ? 'Historial de propuestas'
-              : 'Propuesta: ${formatCurrency(active.proposedPrice)}',
+        padding: const EdgeInsets.all(AppSpacing.gutter),
+        decoration: BoxDecoration(
+          color: colors.secondaryContainer,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(color: colors.outlineVariant),
         ),
-        subtitle:
-            active == null
-                ? Text('${offers.length} propuesta(s)')
-                : Text(
-                  active.conditions?.isNotEmpty == true
-                      ? active.conditions!
-                      : 'Sin condiciones adicionales',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-        trailing:
-            writable
-                ? IconButton(
-                  tooltip: 'Nueva propuesta',
-                  onPressed: onNewProposal,
-                  icon: const Icon(Icons.add),
-                )
-                : null,
-        children: [
-          if (active != null && active.createdById != userId && writable)
-            OverflowBar(
-              alignment: MainAxisAlignment.end,
-              spacing: 8,
-              children: [
-                TextButton(
-                  onPressed: () => onReject(active),
-                  child: const Text('Rechazar'),
-                ),
-                FilledButton(
-                  onPressed: () => onAccept(active),
-                  child: const Text('Aceptar'),
-                ),
-              ],
+        child: Row(
+          children: [
+            Icon(
+              Icons.lock_outline_rounded,
+              color: colors.onSecondaryContainer,
             ),
-          for (final offer in offers)
-            ListTile(
-              dense: true,
-              title: Text(
-                'Versión ${offer.revision}: '
-                '${formatCurrency(offer.proposedPrice)}',
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                'Esta conversación está disponible solo para lectura.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: colors.onSecondaryContainer,
+                ),
               ),
-              subtitle: Text(offer.conditions ?? offer.message),
-              trailing: Text(offer.status.label),
             ),
-        ],
+          ],
+        ),
       ),
     );
   }

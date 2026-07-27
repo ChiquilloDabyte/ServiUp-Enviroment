@@ -5,14 +5,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/logger/app_logger.dart';
+import '../../core/theme/app_dimensions.dart';
 import '../../data/services/places_service.dart';
 import '../../domain/providers/app_providers.dart';
 import '../../domain/viewmodels/places_search_viewmodel.dart';
 import '../../domain/viewmodels/service_request_viewmodel.dart';
-import '../../widgets/address_suggestions.dart';
-import '../../widgets/category_dropdown.dart';
 import '../../widgets/error_banner.dart';
-import '../../widgets/location_picker.dart';
+import '../../widgets/request_form_sections.dart';
+import '../../widgets/responsive_content.dart';
 
 class CreateRequestView extends ConsumerStatefulWidget {
   const CreateRequestView({super.key});
@@ -224,111 +224,70 @@ class _CreateRequestViewState extends ConsumerState<CreateRequestView> {
     return Scaffold(
       appBar: AppBar(title: const Text('Nueva solicitud')),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (_error != null) ...[
-                ErrorBanner(message: _error!),
-                const SizedBox(height: 16),
-              ],
-              CategoryDropdown(
-                value: _category,
-                onChanged: (value) => setState(() => _category = value),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _descriptionController,
-                decoration: const InputDecoration(
-                  labelText: 'Descripción del servicio',
-                ),
-                maxLines: 4,
-                validator:
-                    (value) =>
-                        value == null || value.length < 10
-                            ? 'Describe el servicio con al menos 10 caracteres'
-                            : null,
-              ),
-              const SizedBox(height: 16),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Fecha y hora'),
-                subtitle: Text(_scheduledAt.toString()),
-                trailing: IconButton(
-                  icon: const Icon(Icons.calendar_today),
-                  onPressed: _pickDateTime,
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _addressController,
-                focusNode: _addressFocusNode,
-                keyboardType: TextInputType.streetAddress,
-                textInputAction: TextInputAction.done,
-                autofillHints: const [AutofillHints.fullStreetAddress],
-                decoration: InputDecoration(
-                  labelText: 'Dirección del servicio',
-                  hintText: 'Escribe una dirección',
-                  prefixIcon: const Icon(Icons.location_on_outlined),
-                  suffixIcon:
-                      placesState.isSearching || placesState.isSelecting
-                          ? const Padding(
-                            padding: EdgeInsets.all(14),
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                          : null,
-                ),
-                onChanged: _onAddressChanged,
-                onFieldSubmitted: (_) {
-                  ref
-                      .read(placesSearchViewModelProvider.notifier)
-                      .dismissSuggestions();
-                },
-                validator: (value) {
-                  if (value == null || value.trim().length < 5) {
-                    return 'Ingresa una dirección válida';
-                  }
-                  return null;
-                },
-              ),
-              AddressSuggestions(
-                suggestions: placesState.suggestions,
-                onSelected: (suggestion) {
-                  unawaited(_selectAddress(suggestion));
-                },
-              ),
-              if (placesState.error != null) ...[
-                const SizedBox(height: 6),
+        child: ResponsiveContent(
+          maxWidth: 800,
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
                 Text(
-                  placesState.error!,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.error,
-                    fontSize: 12,
+                  'Cuéntanos qué necesitas',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  'Agrega los detalles para recibir propuestas más precisas.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
-              ] else if (!_addressCoordinatesConfirmed) ...[
-                const SizedBox(height: 6),
-                const Text(
-                  'Selecciona una sugerencia o confirma el punto en el mapa.',
-                  style: TextStyle(fontSize: 12),
+                const SizedBox(height: AppSpacing.md),
+                if (_error != null) ...[
+                  ErrorBanner(message: _error!),
+                  const SizedBox(height: AppSpacing.gutter),
+                ],
+                ServiceDetailsFormSection(
+                  category: _category,
+                  onCategoryChanged:
+                      (value) => setState(() => _category = value),
+                  descriptionController: _descriptionController,
+                  scheduledAt: _scheduledAt,
+                  onPickDateTime: _pickDateTime,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                RequestLocationFormSection(
+                  addressController: _addressController,
+                  addressFocusNode: _addressFocusNode,
+                  suggestions: placesState.suggestions,
+                  isBusy: placesState.isSearching || placesState.isSelecting,
+                  coordinatesConfirmed: _addressCoordinatesConfirmed,
+                  latitude: _latitude,
+                  longitude: _longitude,
+                  onAddressChanged: _onAddressChanged,
+                  onAddressSubmitted: () {
+                    ref
+                        .read(placesSearchViewModelProvider.notifier)
+                        .dismissSuggestions();
+                  },
+                  onSuggestionSelected: (suggestion) {
+                    unawaited(_selectAddress(suggestion));
+                  },
+                  onLocationChanged: (lat, lng) {
+                    unawaited(_updateLocation(lat, lng));
+                  },
+                  error: placesState.error,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                FilledButton.icon(
+                  onPressed: isLoading ? null : _submit,
+                  icon: const Icon(Icons.publish_outlined),
+                  label: Text(
+                    isLoading ? 'Publicando...' : 'Publicar solicitud',
+                  ),
                 ),
               ],
-              const SizedBox(height: 8),
-              LocationPicker(
-                initialLatitude: _latitude,
-                initialLongitude: _longitude,
-                onLocationChanged: (lat, lng) {
-                  unawaited(_updateLocation(lat, lng));
-                },
-              ),
-              const SizedBox(height: 24),
-              FilledButton(
-                onPressed: isLoading ? null : _submit,
-                child: Text(isLoading ? 'Publicando...' : 'Publicar solicitud'),
-              ),
-            ],
+            ),
           ),
         ),
       ),

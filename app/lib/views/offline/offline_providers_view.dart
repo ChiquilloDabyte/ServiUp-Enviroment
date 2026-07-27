@@ -3,9 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/theme/app_dimensions.dart';
 import '../../domain/viewmodels/offline_viewmodel.dart';
 import '../../widgets/category_dropdown.dart';
+import '../../widgets/empty_state.dart';
 import '../../widgets/loading_view.dart';
+import '../../widgets/responsive_content.dart';
+import '../../widgets/section_card.dart';
 
 class OfflineProvidersView extends ConsumerStatefulWidget {
   const OfflineProvidersView({super.key});
@@ -51,6 +55,7 @@ class _OfflineProvidersViewState extends ConsumerState<OfflineProvidersView> {
         title: const Text('Directorio offline'),
         actions: [
           IconButton(
+            tooltip: 'Sincronizar directorio',
             icon: const Icon(Icons.sync),
             onPressed: _sync,
           ),
@@ -58,57 +63,146 @@ class _OfflineProvidersViewState extends ConsumerState<OfflineProvidersView> {
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: CategoryDropdown(
-              value: _category,
-              onChanged: (value) => setState(() => _category = value),
+          ResponsiveContent(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CategoryDropdown(
+                  value: _category,
+                  onChanged: (value) => setState(() => _category = value),
+                ),
+                lastSync.when(
+                  data:
+                      (date) =>
+                          date == null
+                              ? const SizedBox.shrink()
+                              : Padding(
+                                padding: const EdgeInsets.only(
+                                  top: AppSpacing.sm,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.sync_outlined,
+                                      size: 18,
+                                      color:
+                                          Theme.of(
+                                            context,
+                                          ).colorScheme.onSurfaceVariant,
+                                    ),
+                                    const SizedBox(width: AppSpacing.xs),
+                                    Expanded(
+                                      child: Text(
+                                        'Última sincronización: $date',
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodySmall?.copyWith(
+                                          color:
+                                              Theme.of(
+                                                context,
+                                              ).colorScheme.onSurfaceVariant,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, __) => const SizedBox.shrink(),
+                ),
+              ],
             ),
-          ),
-          lastSync.when(
-            data: (date) => date == null
-                ? const SizedBox.shrink()
-                : Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text('Última sincronización: $date'),
-                  ),
-            loading: () => const SizedBox.shrink(),
-            error: (_, __) => const SizedBox.shrink(),
           ),
           Expanded(
             child: providers.when(
-              loading: () => const LoadingView(),
-              error: (error, _) => Center(child: Text(error.toString())),
+              loading: () => const ResponsiveContent(child: LoadingView()),
+              error:
+                  (error, _) => ResponsiveContent(
+                    child: EmptyState(
+                      icon: Icons.cloud_off_outlined,
+                      title: 'No pudimos abrir el directorio',
+                      message: error.toString(),
+                    ),
+                  ),
               data: (items) {
                 if (items.isEmpty) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Text(
-                        'No hay prestadores guardados. Conéctate a internet y sincroniza para usar ${AppConstants.appName} sin red.',
-                        textAlign: TextAlign.center,
+                  return ResponsiveContent(
+                    child: EmptyState(
+                      icon: Icons.contacts_outlined,
+                      title: 'No hay prestadores guardados',
+                      message:
+                          'Conéctate a internet y sincroniza para usar '
+                          '${AppConstants.appName} sin red.',
+                      action: OutlinedButton.icon(
+                        onPressed: _sync,
+                        icon: const Icon(Icons.sync),
+                        label: const Text('Sincronizar'),
                       ),
                     ),
                   );
                 }
 
-                return ListView.separated(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: items.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
-                  itemBuilder: (context, index) {
-                    final provider = items[index];
-                    return Card(
-                      child: ListTile(
-                        title: Text(provider.name),
-                        subtitle: Text(provider.categories.join(', ')),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.phone),
-                          onPressed: () => _call(provider.phone),
+                return ResponsiveContent(
+                  child: ListView.separated(
+                    padding: EdgeInsets.zero,
+                    itemCount: items.length,
+                    separatorBuilder:
+                        (_, __) => const SizedBox(height: AppSpacing.sm),
+                    itemBuilder: (context, index) {
+                      final provider = items[index];
+                      return SectionCard(
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.primaryFixed,
+                              foregroundColor:
+                                  Theme.of(
+                                    context,
+                                  ).colorScheme.onPrimaryFixedVariant,
+                              child: Text(
+                                provider.name.isEmpty
+                                    ? '?'
+                                    : provider.name.characters.first
+                                        .toUpperCase(),
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.gutter),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    provider.name,
+                                    style:
+                                        Theme.of(context).textTheme.titleMedium,
+                                  ),
+                                  const SizedBox(height: AppSpacing.xs),
+                                  Text(
+                                    provider.categories.join(', '),
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall?.copyWith(
+                                      color:
+                                          Theme.of(
+                                            context,
+                                          ).colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            IconButton(
+                              tooltip: 'Llamar a ${provider.name}',
+                              icon: const Icon(Icons.phone_outlined),
+                              onPressed: () => _call(provider.phone),
+                            ),
+                          ],
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 );
               },
             ),

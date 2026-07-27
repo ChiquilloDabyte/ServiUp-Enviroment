@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../core/theme/app_dimensions.dart';
+import '../../widgets/responsive_content.dart';
+import '../../widgets/section_card.dart';
+
 class TermsConditionsView extends StatefulWidget {
   const TermsConditionsView({super.key});
 
@@ -9,7 +13,7 @@ class TermsConditionsView extends StatefulWidget {
 }
 
 class _TermsConditionsViewState extends State<TermsConditionsView> {
-  String _terms = "Cargando...";
+  String _terms = 'Cargando...';
 
   @override
   void initState() {
@@ -19,6 +23,7 @@ class _TermsConditionsViewState extends State<TermsConditionsView> {
 
   Future<void> _loadTerms() async {
     final text = await rootBundle.loadString('lib/assets/legal/terms.txt');
+    if (!mounted) return;
 
     setState(() {
       _terms = text;
@@ -27,38 +32,42 @@ class _TermsConditionsViewState extends State<TermsConditionsView> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Términos y Condiciones'),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Términos y Condiciones',
-              style: Theme.of(context).textTheme.headlineMedium,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: ResponsiveContent(
+            maxWidth: 840,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Términos y Condiciones',
+                  style: theme.textTheme.headlineMedium,
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  'Última actualización: Julio de 2026',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                SectionCard(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: SelectableText(
+                    _terms,
+                    style: theme.textTheme.bodyMedium?.copyWith(height: 1.6),
+                  ),
+                ),
+              ],
             ),
-
-            const SizedBox(height: 8),
-
-            Text(
-              'Última actualización: Julio de 2026',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-
-            const Divider(height: 32),
-
-            Text(
-              _terms,
-              style: const TextStyle(
-                fontSize: 16,
-                height: 1.6,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

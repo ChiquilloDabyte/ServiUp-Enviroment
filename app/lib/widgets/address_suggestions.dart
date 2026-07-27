@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_places_sdk_plus/google_places_sdk_plus.dart';
 
+import '../core/theme/app_dimensions.dart';
 import '../data/services/places_service.dart';
 
 class AddressSuggestions extends StatelessWidget {
@@ -18,7 +19,7 @@ class AddressSuggestions extends StatelessWidget {
     if (suggestions.isEmpty) return const SizedBox.shrink();
 
     return Card(
-      margin: const EdgeInsets.only(top: 4),
+      margin: const EdgeInsets.only(top: AppSpacing.xxs),
       clipBehavior: Clip.antiAlias,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -47,7 +48,12 @@ class AddressSuggestions extends StatelessWidget {
           Align(
             alignment: Alignment.centerRight,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.sm,
+                AppSpacing.xs,
+                AppSpacing.sm,
+                AppSpacing.sm,
+              ),
               child: Image(
                 image: FlutterGooglePlacesSdk.assetPoweredByGoogleOnWhite,
                 height: 14,

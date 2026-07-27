@@ -2,11 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/theme/app_dimensions.dart';
 import '../../domain/providers/app_providers.dart';
 import '../../domain/viewmodels/auth_viewmodel.dart';
 import '../../domain/viewmodels/service_request_viewmodel.dart';
+import '../../models/service_request_model.dart';
+import '../../widgets/empty_state.dart';
 import '../../widgets/loading_view.dart';
+import '../../widgets/offline_banner.dart';
 import '../../widgets/request_card.dart';
+import '../../widgets/responsive_content.dart';
 
 class ClientHomeView extends ConsumerWidget {
   const ClientHomeView({super.key});
@@ -14,9 +19,9 @@ class ClientHomeView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProfileProvider).value;
-    final requests =
+    final AsyncValue<List<ServiceRequestModel>> requests =
         user == null
-            ? const AsyncValue<List<dynamic>>.loading()
+            ? const AsyncValue<List<ServiceRequestModel>>.loading()
             : ref.watch(clientRequestsProvider(user.id));
     final hasConnection = ref.watch(hasConnectionProvider).value ?? true;
 
@@ -30,10 +35,12 @@ class ClientHomeView extends ConsumerWidget {
             onPressed: () => context.push('/chats'),
           ),
           IconButton(
+            tooltip: 'Notificaciones',
             icon: const Icon(Icons.notifications_outlined),
             onPressed: () => context.push('/notifications'),
           ),
           IconButton(
+            tooltip: 'Cerrar sesión',
             icon: const Icon(Icons.logout),
             onPressed: () async {
               await ref.read(authViewModelProvider.notifier).signOut();
@@ -45,41 +52,51 @@ class ClientHomeView extends ConsumerWidget {
       body: Column(
         children: [
           if (!hasConnection)
-            MaterialBanner(
-              content: const Text(
-                'Sin conexión. Puedes ver prestadores offline.',
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => context.push('/offline'),
-                  child: const Text('Ver directorio'),
-                ),
-              ],
+            OfflineBanner(
+              message: 'Sin conexión. Puedes ver prestadores offline.',
+              onViewDirectory: () => context.push('/offline'),
             ),
           Expanded(
             child: requests.when(
-              loading: () => const LoadingView(),
+              loading: () => const ResponsiveContent(child: LoadingView()),
               error:
-                  (error, _) =>
-                      Center(child: Text(repositoryErrorMessage(error))),
+                  (error, _) => ResponsiveContent(
+                    child: EmptyState(
+                      icon: Icons.error_outline,
+                      title: 'No pudimos cargar tus solicitudes',
+                      message: repositoryErrorMessage(error),
+                    ),
+                  ),
               data: (items) {
                 if (items.isEmpty) {
-                  return const Center(
-                    child: Text('Aún no tienes solicitudes. Crea la primera.'),
+                  return ResponsiveContent(
+                    child: EmptyState(
+                      icon: Icons.handyman_outlined,
+                      title: 'Aún no tienes solicitudes',
+                      message: 'Publica la primera y encuentra ayuda cerca.',
+                      action: FilledButton.icon(
+                        onPressed: () => context.push('/requests/create'),
+                        icon: const Icon(Icons.add),
+                        label: const Text('Nueva solicitud'),
+                      ),
+                    ),
                   );
                 }
 
-                return ListView.separated(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: items.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    final request = items[index];
-                    return RequestCard(
-                      request: request,
-                      onTap: () => context.push('/requests/${request.id}'),
-                    );
-                  },
+                return ResponsiveContent(
+                  child: ListView.separated(
+                    padding: EdgeInsets.zero,
+                    itemCount: items.length,
+                    separatorBuilder:
+                        (_, __) => const SizedBox(height: AppSpacing.gutter),
+                    itemBuilder: (context, index) {
+                      final request = items[index];
+                      return RequestCard(
+                        request: request,
+                        onTap: () => context.push('/requests/${request.id}'),
+                      );
+                    },
+                  ),
                 );
               },
             ),
