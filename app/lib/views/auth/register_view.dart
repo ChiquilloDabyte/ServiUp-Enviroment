@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/theme/app_dimensions.dart';
 import '../../domain/viewmodels/auth_viewmodel.dart';
 import '../../models/enums/user_role.dart';
 import '../../widgets/error_banner.dart';
+import '../../widgets/responsive_content.dart';
+import '../../widgets/section_card.dart';
 
 class RegisterView extends ConsumerStatefulWidget {
   const RegisterView({super.key});
@@ -57,108 +60,176 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
   @override
   Widget build(BuildContext context) {
     final isLoading = ref.watch(authViewModelProvider).isLoading;
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Crear cuenta')),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
+          child: ResponsiveContent(
+            maxWidth: 640,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (_error != null) ...[
-                  ErrorBanner(message: _error!),
-                  const SizedBox(height: 16),
-                ],
-                TextFormField(
-                  controller: _emailController,
-                  decoration: const InputDecoration(labelText: 'Correo'),
-                  keyboardType: TextInputType.emailAddress,
-                  validator:
-                      (value) =>
-                          value == null || value.isEmpty
-                              ? 'Ingresa tu correo'
-                              : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _passwordController,
-                  decoration: const InputDecoration(labelText: 'Contraseña'),
-                  obscureText: true,
-                  validator:
-                      (value) =>
-                          value == null || value.length < 6
-                              ? 'Mínimo 6 caracteres'
-                              : null,
-                ),
-                const SizedBox(height: 16),
                 Text(
-                  'Tipo de cuenta',
-                  style: Theme.of(context).textTheme.titleMedium,
+                  'Empieza en ServiUp',
+                  style: theme.textTheme.headlineMedium,
                 ),
-                RadioListTile<UserRole>(
-                  title: const Text('Cliente'),
-                  subtitle: const Text('Publico solicitudes de servicio'),
-                  value: UserRole.client,
-                  groupValue: _role,
-                  onChanged: (value) => setState(() => _role = value!),
-                ),
-                RadioListTile<UserRole>(
-                  title: const Text('Prestador'),
-                  subtitle: const Text('Ofrezco servicios'),
-                  value: UserRole.provider,
-                  groupValue: _role,
-                  onChanged: (value) => setState(() => _role = value!),
-                ),
-                const SizedBox(height: 24),
-                CheckboxListTile(
-                  value: _acceptLegalTerms,
-                  onChanged: (value) {
-                    setState(() {
-                      _acceptLegalTerms = value ?? false;
-
-                      if (_acceptLegalTerms) {
-                        _error = null;
-                      }
-                    });
-                  },
-                  controlAffinity: ListTileControlAffinity.leading,
-                  title: Wrap(
-                    children: [
-                      const Text('He leído y acepto los '),
-                      GestureDetector(
-                        onTap: () => context.push('/terms'),
-                        child: const Text(
-                          'Términos y Condiciones',
-                          style: TextStyle(
-                            color: Colors.blue,
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
-                      ),
-                      const Text(' y la '),
-                      GestureDetector(
-                        onTap: () => context.push('/privacy'),
-                        child: const Text(
-                          'Política de Privacidad',
-                          style: TextStyle(
-                            color: Colors.blue,
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
-                      ),
-                      const Text('.'),
-                    ],
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  'Elige cómo quieres usar la plataforma y crea tus credenciales.',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
-                FilledButton(
-                  onPressed: isLoading ? null : _submit,
-                  child: Text(isLoading ? 'Creando...' : 'Registrarme'),
+                const SizedBox(height: AppSpacing.md),
+                SectionCard(
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (_error != null) ...[
+                          ErrorBanner(message: _error!),
+                          const SizedBox(height: AppSpacing.gutter),
+                        ],
+                        TextFormField(
+                          controller: _emailController,
+                          decoration: const InputDecoration(
+                            labelText: 'Correo',
+                            prefixIcon: Icon(Icons.mail_outline_rounded),
+                          ),
+                          keyboardType: TextInputType.emailAddress,
+                          validator:
+                              (value) =>
+                                  value == null || value.isEmpty
+                                      ? 'Ingresa tu correo'
+                                      : null,
+                        ),
+                        const SizedBox(height: AppSpacing.gutter),
+                        TextFormField(
+                          controller: _passwordController,
+                          decoration: const InputDecoration(
+                            labelText: 'Contraseña',
+                            prefixIcon: Icon(Icons.lock_outline_rounded),
+                          ),
+                          obscureText: true,
+                          validator:
+                              (value) =>
+                                  value == null || value.length < 6
+                                      ? 'Mínimo 6 caracteres'
+                                      : null,
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        Text(
+                          'Tipo de cuenta',
+                          style: theme.textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        RadioGroup<UserRole>(
+                          groupValue: _role,
+                          onChanged: (value) {
+                            if (value != null) {
+                              setState(() => _role = value);
+                            }
+                          },
+                          child: Column(
+                            children: [
+                              SectionCard(
+                                padding: EdgeInsets.zero,
+                                radius: AppRadius.md,
+                                child: const RadioListTile<UserRole>(
+                                  title: Text('Cliente'),
+                                  subtitle: Text(
+                                    'Publico solicitudes de servicio',
+                                  ),
+                                  value: UserRole.client,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.xs),
+                              SectionCard(
+                                padding: EdgeInsets.zero,
+                                radius: AppRadius.md,
+                                child: const RadioListTile<UserRole>(
+                                  title: Text('Prestador'),
+                                  subtitle: Text('Ofrezco servicios'),
+                                  value: UserRole.provider,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        CheckboxListTile(
+                          contentPadding: EdgeInsets.zero,
+                          value: _acceptLegalTerms,
+                          onChanged: (value) {
+                            setState(() {
+                              _acceptLegalTerms = value ?? false;
+
+                              if (_acceptLegalTerms) {
+                                _error = null;
+                              }
+                            });
+                          },
+                          controlAffinity: ListTileControlAffinity.leading,
+                          title: Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              const Text('He leído y acepto los '),
+                              _LegalLink(
+                                label: 'Términos y Condiciones',
+                                onTap: () => context.push('/terms'),
+                              ),
+                              const Text(' y la '),
+                              _LegalLink(
+                                label: 'Política de Privacidad',
+                                onTap: () => context.push('/privacy'),
+                              ),
+                              const Text('.'),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        FilledButton(
+                          onPressed: isLoading ? null : _submit,
+                          child: Text(isLoading ? 'Creando...' : 'Registrarme'),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LegalLink extends StatelessWidget {
+  const _LegalLink({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = theme.colorScheme.primary;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.sm),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
+        child: Text(
+          label,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: color,
+            decoration: TextDecoration.underline,
+            decorationColor: color,
           ),
         ),
       ),

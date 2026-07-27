@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import '../core/theme/app_dimensions.dart';
+
 class LocationPicker extends StatefulWidget {
   const LocationPicker({
     super.key,
@@ -49,22 +51,39 @@ class _LocationPickerState extends State<LocationPicker> {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: SizedBox(
-        height: 220,
-        child: GoogleMap(
-          initialCameraPosition: CameraPosition(target: _position, zoom: 15),
-          onMapCreated: (controller) => _mapController = controller,
-          markers: {
-            Marker(markerId: const MarkerId('selected'), position: _position),
-          },
-          onTap: (latLng) {
-            setState(() => _position = latLng);
-            widget.onLocationChanged(latLng.latitude, latLng.longitude);
-          },
-          myLocationButtonEnabled: true,
-          myLocationEnabled: true,
+    final colors = Theme.of(context).colorScheme;
+
+    return Semantics(
+      label: 'Mapa para seleccionar la ubicación del servicio',
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: AppRadius.serviceCard,
+          border: Border.all(color: colors.primary.withValues(alpha: 0.12)),
+        ),
+        child: ClipRRect(
+          borderRadius: AppRadius.serviceCard,
+          child: SizedBox(
+            height: 240,
+            child: GoogleMap(
+              initialCameraPosition: CameraPosition(
+                target: _position,
+                zoom: 15,
+              ),
+              onMapCreated: (controller) => _mapController = controller,
+              markers: {
+                Marker(
+                  markerId: const MarkerId('selected'),
+                  position: _position,
+                ),
+              },
+              onTap: (latLng) {
+                setState(() => _position = latLng);
+                widget.onLocationChanged(latLng.latitude, latLng.longitude);
+              },
+              myLocationButtonEnabled: true,
+              myLocationEnabled: true,
+            ),
+          ),
         ),
       ),
     );

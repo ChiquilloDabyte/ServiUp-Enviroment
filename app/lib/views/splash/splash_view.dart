@@ -6,7 +6,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/logger/app_logger.dart';
+import '../../core/theme/app_dimensions.dart';
 import '../../domain/providers/app_providers.dart';
+import '../../widgets/responsive_content.dart';
+import '../../widgets/section_card.dart';
 
 class SplashView extends ConsumerStatefulWidget {
   const SplashView({super.key});
@@ -62,24 +65,56 @@ class _SplashViewState extends ConsumerState<SplashView> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.handyman_rounded,
-              size: 72,
-              color: Theme.of(context).colorScheme.primary,
+      body: SafeArea(
+        child: Center(
+          child: ResponsiveContent(
+            maxWidth: 440,
+            padding: const EdgeInsets.all(AppSpacing.mobileMargin),
+            child: SectionCard(
+              radius: AppRadius.xl,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.lg,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 104,
+                    height: 104,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primaryFixed,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.handyman_rounded,
+                      size: 52,
+                      color: theme.colorScheme.onPrimaryFixedVariant,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  Text(
+                    AppConstants.appName,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.headlineLarge,
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    'Servicios confiables, cuando los necesitas.',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  const CircularProgressIndicator(),
+                ],
+              ),
             ),
-            const SizedBox(height: 16),
-            Text(
-              AppConstants.appName,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 24),
-            const CircularProgressIndicator(),
-          ],
+          ),
         ),
       ),
     );

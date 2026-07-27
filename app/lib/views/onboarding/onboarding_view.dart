@@ -6,10 +6,14 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/theme/app_dimensions.dart';
 import '../../domain/providers/app_providers.dart';
 import '../../domain/viewmodels/auth_viewmodel.dart';
 import '../../models/enums/user_role.dart';
+import '../../widgets/empty_state.dart';
 import '../../widgets/error_banner.dart';
+import '../../widgets/responsive_content.dart';
+import '../../widgets/section_card.dart';
 
 class OnboardingView extends ConsumerStatefulWidget {
   const OnboardingView({super.key});
@@ -50,8 +54,11 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
     setState(() => _error = null);
 
     try {
-      final location = await ref.read(locationServiceProvider).getCurrentLocation();
-      await ref.read(userViewModelProvider.notifier).saveProfile(
+      final location =
+          await ref.read(locationServiceProvider).getCurrentLocation();
+      await ref
+          .read(userViewModelProvider.notifier)
+          .saveProfile(
             user: user,
             name: _nameController.text,
             phone: _phoneController.text,
@@ -73,90 +80,189 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Completa tu perfil')),
-      body: profile.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text(authErrorMessage(error))),
-        data: (user) {
-          if (user == null) {
-            return const Center(child: Text('Sesión no disponible'));
-          }
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (_error != null) ...[
-                    ErrorBanner(message: _error!),
-                    const SizedBox(height: 16),
-                  ],
-                  Center(
-                    child: GestureDetector(
-                      onTap: _pickAvatar,
-                      child: CircleAvatar(
-                        radius: 48,
-                        backgroundImage:
-                            _avatarFile != null ? FileImage(_avatarFile!) : null,
-                        child: _avatarFile == null
-                            ? const Icon(Icons.camera_alt)
-                            : null,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  TextFormField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(labelText: 'Nombre completo'),
-                    validator: (value) =>
-                        value == null || value.isEmpty ? 'Ingresa tu nombre' : null,
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _phoneController,
-                    decoration: const InputDecoration(labelText: 'Teléfono'),
-                    keyboardType: TextInputType.phone,
-                    validator: (value) =>
-                        value == null || value.isEmpty ? 'Ingresa tu teléfono' : null,
-                  ),
-                  if (user.role == UserRole.provider) ...[
-                    const SizedBox(height: 16),
-                    Text(
-                      'Categorías de servicio',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      children: AppConstants.serviceCategories.map((category) {
-                        final selected = _selectedCategories.contains(category);
-                        return FilterChip(
-                          label: Text(category),
-                          selected: selected,
-                          onSelected: (value) {
-                            setState(() {
-                              if (value) {
-                                _selectedCategories.add(category);
-                              } else {
-                                _selectedCategories.remove(category);
-                              }
-                            });
-                          },
-                        );
-                      }).toList(),
-                    ),
-                  ],
-                  const SizedBox(height: 24),
-                  FilledButton(
-                    onPressed: isLoading ? null : _submit,
-                    child: Text(isLoading ? 'Guardando...' : 'Continuar'),
-                  ),
-                ],
+      body: SafeArea(
+        child: profile.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error:
+              (error, _) => EmptyState(
+                icon: Icons.person_off_outlined,
+                title: 'No pudimos cargar tu perfil',
+                message: authErrorMessage(error),
               ),
-            ),
-          );
-        },
+          data: (user) {
+            if (user == null) {
+              return const EmptyState(
+                icon: Icons.person_off_outlined,
+                title: 'Sesión no disponible',
+              );
+            }
+
+            return SingleChildScrollView(
+              child: ResponsiveContent(
+                maxWidth: 680,
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'Cuéntanos sobre ti',
+                        style: Theme.of(context).textTheme.headlineMedium,
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        'Esta información ayuda a generar confianza en cada servicio.',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      if (_error != null) ...[
+                        ErrorBanner(message: _error!),
+                        const SizedBox(height: AppSpacing.gutter),
+                      ],
+                      SectionCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Center(
+                              child: Semantics(
+                                button: true,
+                                label: 'Seleccionar foto de perfil',
+                                child: InkWell(
+                                  onTap: _pickAvatar,
+                                  customBorder: const CircleBorder(),
+                                  child: CircleAvatar(
+                                    radius: 52,
+                                    backgroundColor:
+                                        Theme.of(
+                                          context,
+                                        ).colorScheme.primaryFixed,
+                                    foregroundImage:
+                                        _avatarFile != null
+                                            ? FileImage(_avatarFile!)
+                                            : null,
+                                    child:
+                                        _avatarFile == null
+                                            ? Icon(
+                                              Icons.add_a_photo_outlined,
+                                              size: 32,
+                                              color:
+                                                  Theme.of(context)
+                                                      .colorScheme
+                                                      .onPrimaryFixedVariant,
+                                            )
+                                            : null,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.xs),
+                            Text(
+                              'Añadir foto',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(
+                                context,
+                              ).textTheme.labelLarge?.copyWith(
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                            TextFormField(
+                              controller: _nameController,
+                              decoration: const InputDecoration(
+                                labelText: 'Nombre completo',
+                                prefixIcon: Icon(Icons.person_outline_rounded),
+                              ),
+                              validator:
+                                  (value) =>
+                                      value == null || value.isEmpty
+                                          ? 'Ingresa tu nombre'
+                                          : null,
+                            ),
+                            const SizedBox(height: AppSpacing.gutter),
+                            TextFormField(
+                              controller: _phoneController,
+                              decoration: const InputDecoration(
+                                labelText: 'Teléfono',
+                                prefixIcon: Icon(Icons.phone_outlined),
+                              ),
+                              keyboardType: TextInputType.phone,
+                              validator:
+                                  (value) =>
+                                      value == null || value.isEmpty
+                                          ? 'Ingresa tu teléfono'
+                                          : null,
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (user.role == UserRole.provider) ...[
+                        const SizedBox(height: AppSpacing.md),
+                        SectionCard(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Categorías de servicio',
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                              const SizedBox(height: AppSpacing.xs),
+                              Text(
+                                'Selecciona los trabajos que puedes realizar.',
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.bodySmall?.copyWith(
+                                  color:
+                                      Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.sm),
+                              Wrap(
+                                spacing: AppSpacing.xs,
+                                runSpacing: AppSpacing.xs,
+                                children:
+                                    AppConstants.serviceCategories.map((
+                                      category,
+                                    ) {
+                                      final selected = _selectedCategories
+                                          .contains(category);
+                                      return FilterChip(
+                                        label: Text(category),
+                                        selected: selected,
+                                        onSelected: (value) {
+                                          setState(() {
+                                            if (value) {
+                                              _selectedCategories.add(category);
+                                            } else {
+                                              _selectedCategories.remove(
+                                                category,
+                                              );
+                                            }
+                                          });
+                                        },
+                                      );
+                                    }).toList(),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: AppSpacing.md),
+                      FilledButton.icon(
+                        onPressed: isLoading ? null : _submit,
+                        icon: const Icon(Icons.arrow_forward_rounded),
+                        label: Text(isLoading ? 'Guardando...' : 'Continuar'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }

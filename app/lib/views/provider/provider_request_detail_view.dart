@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/theme/app_dimensions.dart';
 import '../../domain/providers/app_providers.dart';
 import '../../domain/viewmodels/offer_viewmodel.dart';
 import '../../domain/viewmodels/service_request_viewmodel.dart';
 import '../../models/enums/request_status.dart';
-import '../../utils/formatters.dart';
 import '../../widgets/error_banner.dart';
 import '../../widgets/loading_view.dart';
 import '../../widgets/request_map_preview.dart';
+import '../../widgets/request_summary_card.dart';
+import '../../widgets/responsive_content.dart';
+import '../../widgets/section_card.dart';
 
 class ProviderRequestDetailView extends ConsumerStatefulWidget {
   const ProviderRequestDetailView({super.key, required this.requestId});
@@ -88,102 +91,129 @@ class _ProviderRequestDetailViewState
 
           final isAssignedProvider = item.acceptedProviderId == user?.id;
 
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              if (_error != null) ...[
-                ErrorBanner(message: _error!),
-                const SizedBox(height: 16),
-              ],
-              Text(
-                item.category,
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              const SizedBox(height: 8),
-              Text(item.description),
-              Text('Dirección: ${item.address}'),
-              Text('Programado: ${formatDateTime(item.scheduledAt)}'),
-              Text('Estado: ${item.status.label}'),
-              const SizedBox(height: 16),
-              RequestMapPreview(
-                latitude: item.latitude,
-                longitude: item.longitude,
-              ),
-              if (item.status == RequestStatus.open) ...[
-                const SizedBox(height: 24),
-                TextField(
-                  controller: _priceController,
-                  decoration: const InputDecoration(
-                    labelText: 'Precio propuesto',
+          return ResponsiveContent(
+            maxWidth: 900,
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                if (_error != null) ...[
+                  ErrorBanner(message: _error!),
+                  const SizedBox(height: AppSpacing.md),
+                ],
+                RequestSummaryCard(request: item),
+                const SizedBox(height: AppSpacing.md),
+                RequestMapPreview(
+                  latitude: item.latitude,
+                  longitude: item.longitude,
+                ),
+                if (item.status == RequestStatus.open) ...[
+                  const SizedBox(height: AppSpacing.lg),
+                  SectionCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          'Envía tu propuesta',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          'Indica un precio y agrega un mensaje para el cliente.',
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodySmall?.copyWith(
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.gutter),
+                        TextField(
+                          controller: _priceController,
+                          decoration: const InputDecoration(
+                            labelText: 'Precio propuesto',
+                            prefixIcon: Icon(Icons.payments_outlined),
+                          ),
+                          keyboardType: TextInputType.number,
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        TextField(
+                          controller: _messageController,
+                          decoration: const InputDecoration(
+                            labelText: 'Mensaje',
+                            prefixIcon: Icon(Icons.message_outlined),
+                          ),
+                          maxLines: 3,
+                        ),
+                        const SizedBox(height: AppSpacing.gutter),
+                        FilledButton.icon(
+                          onPressed: isLoading ? null : _sendOffer,
+                          icon: const Icon(Icons.send_outlined),
+                          label: Text(
+                            isLoading ? 'Enviando...' : 'Enviar oferta',
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  keyboardType: TextInputType.number,
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _messageController,
-                  decoration: const InputDecoration(labelText: 'Mensaje'),
-                  maxLines: 3,
-                ),
-                const SizedBox(height: 16),
-                FilledButton(
-                  onPressed: isLoading ? null : _sendOffer,
-                  child: Text(isLoading ? 'Enviando...' : 'Enviar oferta'),
-                ),
-                providerOffers.when(
-                  loading: () => const SizedBox.shrink(),
-                  error: (_, _) => const SizedBox.shrink(),
-                  data: (offers) {
-                    final hasOffer = offers.any(
-                      (offer) => offer.requestId == item.id,
-                    );
-                    if (!hasOffer || user == null) {
-                      return const SizedBox.shrink();
-                    }
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: OutlinedButton.icon(
-                        onPressed:
-                            () => context.push('/chats/${item.id}_${user.id}'),
-                        icon: const Icon(Icons.chat_bubble_outline),
-                        label: const Text('Conversar'),
-                      ),
-                    );
-                  },
-                ),
+                  providerOffers.when(
+                    loading: () => const SizedBox.shrink(),
+                    error: (_, _) => const SizedBox.shrink(),
+                    data: (offers) {
+                      final hasOffer = offers.any(
+                        (offer) => offer.requestId == item.id,
+                      );
+                      if (!hasOffer || user == null) {
+                        return const SizedBox.shrink();
+                      }
+                      return Padding(
+                        padding: const EdgeInsets.only(top: AppSpacing.xs),
+                        child: OutlinedButton.icon(
+                          onPressed:
+                              () =>
+                                  context.push('/chats/${item.id}_${user.id}'),
+                          icon: const Icon(Icons.chat_bubble_outline),
+                          label: const Text('Conversar'),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+                if (isAssignedProvider &&
+                    item.status == RequestStatus.accepted) ...[
+                  const SizedBox(height: AppSpacing.gutter),
+                  FilledButton.icon(
+                    onPressed:
+                        user == null
+                            ? null
+                            : () => ref
+                                .read(offerViewModelProvider.notifier)
+                                .markInProgress(
+                                  requestId: item.id,
+                                  providerId: user.id,
+                                ),
+                    icon: const Icon(Icons.play_arrow_outlined),
+                    label: const Text('Iniciar servicio'),
+                  ),
+                ],
+                if (isAssignedProvider &&
+                    item.status == RequestStatus.inProgress) ...[
+                  const SizedBox(height: AppSpacing.gutter),
+                  FilledButton.icon(
+                    onPressed:
+                        user == null
+                            ? null
+                            : () => ref
+                                .read(offerViewModelProvider.notifier)
+                                .markCompleted(
+                                  requestId: item.id,
+                                  providerId: user.id,
+                                ),
+                    icon: const Icon(Icons.check_circle_outline),
+                    label: const Text('Marcar como completado'),
+                  ),
+                ],
               ],
-              if (isAssignedProvider &&
-                  item.status == RequestStatus.accepted) ...[
-                const SizedBox(height: 16),
-                FilledButton(
-                  onPressed:
-                      user == null
-                          ? null
-                          : () => ref
-                              .read(offerViewModelProvider.notifier)
-                              .markInProgress(
-                                requestId: item.id,
-                                providerId: user.id,
-                              ),
-                  child: const Text('Iniciar servicio'),
-                ),
-              ],
-              if (isAssignedProvider &&
-                  item.status == RequestStatus.inProgress) ...[
-                const SizedBox(height: 16),
-                FilledButton(
-                  onPressed:
-                      user == null
-                          ? null
-                          : () => ref
-                              .read(offerViewModelProvider.notifier)
-                              .markCompleted(
-                                requestId: item.id,
-                                providerId: user.id,
-                              ),
-                  child: const Text('Marcar como completado'),
-                ),
-              ],
-            ],
+            ),
           );
         },
       ),
