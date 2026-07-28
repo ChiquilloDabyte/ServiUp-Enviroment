@@ -26,40 +26,66 @@ class ClientRequestDetailView extends ConsumerWidget {
 
   Future<void> _returnToProgress(BuildContext context, WidgetRef ref) async {
     final controller = TextEditingController();
+    
     final reason = await showDialog<String>(
       context: context,
-      builder:
-          (dialogContext) => AlertDialog(
-            title: const Text('Devolver al prestador'),
-            content: TextField(
-              controller: controller,
-              minLines: 3,
-              maxLines: 5,
-              maxLength: 500,
-              decoration: const InputDecoration(
-                labelText: 'Motivo',
-                helperText: 'Describe qué falta por completar.',
+      builder: (dialogContext) {
+        String? errorMessage;
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Devolver al prestador'),
+              content: TextField(
+                controller: controller,
+                minLines: 3,
+                maxLines: 5,
+                maxLength: 500,
+                decoration: InputDecoration(
+                  labelText: 'Motivo',
+                  helperText: 'Describe qué falta por completar.',
+                  errorText: errorMessage,
+                  errorStyle: const TextStyle(
+                    fontSize: 11, // Reduce un poco el tamaño para que quepa mejor
+                    height: 1.2,  // Ajusta la altura de la línea
+                  ),
+                  errorMaxLines: 2, // Permite que el texto del error salte a dos líneas si es necesario
+                ),
               ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop(),
-                child: const Text('Cancelar'),
-              ),
-              FilledButton(
-                onPressed: () {
-                  final value = controller.text.trim();
-                  if (value.length >= 10) {
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Cancelar'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    final value = controller.text.trim();
+
+                    if (value.length < 10) {
+                      setState(() {
+                        errorMessage =
+                            'El motivo debe tener al menos 10 caracteres.';
+                      });
+                      return;
+                    }
+
                     Navigator.of(dialogContext).pop(value);
-                  }
-                },
-                child: const Text('Devolver'),
-              ),
-            ],
-          ),
+                  },
+                  child: const Text('Devolver'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
-    controller.dispose();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.dispose();
+    });
+
     if (reason == null || !context.mounted) return;
+    
     try {
       await ref
           .read(offerViewModelProvider.notifier)
@@ -225,88 +251,107 @@ class ClientRequestDetailView extends ConsumerWidget {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Expanded(
-                                            child: Text(
-                                              formatCurrency(
-                                                offer.proposedPrice,
-                                              ),
-                                              style:
-                                                  Theme.of(
-                                                    context,
-                                                  ).textTheme.titleMedium,
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  formatCurrency(offer.proposedPrice),
+                                                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  offer.message,
+                                                  style: Theme.of(context).textTheme.bodyMedium,
+                                                ),
+                                              ],
                                             ),
                                           ),
+
                                           OfferStatusChip(status: offer.status),
                                         ],
                                       ),
-                                      if (offer.message.isNotEmpty)
-                                        Text(offer.message),
-                                      const SizedBox(height: AppSpacing.sm),
-                                      Wrap(
-                                        spacing: 8,
+                                      const SizedBox(height: 20),
+                                      Column(
                                         children: [
-                                          OutlinedButton.icon(
-                                            onPressed:
-                                                user == null
-                                                    ? null
-                                                    : () async {
-                                                      final chatId =
-                                                          offer.chatId.isEmpty
-                                                              ? await ref
-                                                                  .read(
-                                                                    chatViewModelProvider
-                                                                        .notifier,
-                                                                  )
-                                                                  .ensureChat(
-                                                                    requestId:
-                                                                        item.id,
-                                                                    clientId:
-                                                                        item.clientId,
-                                                                    providerId:
-                                                                        offer
-                                                                            .providerId,
-                                                                  )
-                                                              : offer.chatId;
-                                                      if (context.mounted) {
-                                                        context.push(
-                                                          '/chats/$chatId',
-                                                        );
-                                                      }
-                                                    },
-                                            icon: const Icon(
-                                              Icons.chat_bubble_outline,
-                                            ),
-                                            label: const Text('Conversar'),
+
+                                          Row(
+                                            children: [
+
+                                              Expanded(
+                                                child: OutlinedButton.icon(
+                                                  onPressed: user == null
+                                                      ? null
+                                                      : () async {
+                                                          final chatId =
+                                                              offer.chatId.isEmpty
+                                                                  ? await ref
+                                                                      .read(chatViewModelProvider.notifier)
+                                                                      .ensureChat(
+                                                                        requestId: item.id,
+                                                                        clientId: item.clientId,
+                                                                        providerId: offer.providerId,
+                                                                      )
+                                                                  : offer.chatId;
+
+                                                          if (context.mounted) {
+                                                            context.push('/chats/$chatId');
+                                                          }
+                                                        },
+                                                  icon: const Icon(Icons.chat_bubble_outline),
+                                                  label: const Text("Chatear"),
+                                                ),
+                                              ),
+
+                                              if (canDecide) ...[
+                                                const SizedBox(width: 12),
+
+                                                Expanded(
+                                                  child: FilledButton.icon(
+                                                    onPressed: () => ref
+                                                        .read(offerViewModelProvider.notifier)
+                                                        .acceptOffer(
+                                                          offer: offer,
+                                                          actorId: user.id,
+                                                        ),
+                                                    icon: const Icon(Icons.check),
+                                                    label: const Text("Aceptar"),
+                                                  ),
+                                                ),
+                                              ],
+                                            ],
                                           ),
-                                          if (canDecide)
-                                            FilledButton(
-                                              onPressed:
-                                                  () => ref
-                                                      .read(
-                                                        offerViewModelProvider
-                                                            .notifier,
-                                                      )
-                                                      .acceptOffer(
-                                                        offer: offer,
-                                                        actorId: user.id,
-                                                      ),
-                                              child: const Text('Aceptar'),
+
+                                          if (canDecide) ...[
+                                            const SizedBox(height: 12),
+
+                                            OutlinedButton.icon(
+                                              onPressed: () => ref
+                                                  .read(offerViewModelProvider.notifier)
+                                                  .rejectOffer(
+                                                    offer: offer,
+                                                    actorId: user.id,
+                                                  ),
+                                              icon: const Icon(
+                                                Icons.close,
+                                                color: Colors.red,
+                                              ),
+                                              label: const Text(
+                                                "Rechazar",
+                                                style: TextStyle(
+                                                  color: Colors.red,
+                                                ),
+                                              ),
+                                              style: OutlinedButton.styleFrom(
+                                                minimumSize: const Size(double.infinity, 50),
+                                                side: const BorderSide(color: Colors.red),
+                                              ),
                                             ),
-                                          if (canDecide)
-                                            TextButton(
-                                              onPressed:
-                                                  () => ref
-                                                      .read(
-                                                        offerViewModelProvider
-                                                            .notifier,
-                                                      )
-                                                      .rejectOffer(
-                                                        offer: offer,
-                                                        actorId: user.id,
-                                                      ),
-                                              child: const Text('Rechazar'),
-                                            ),
+                                          ],
                                         ],
                                       ),
                                     ],
