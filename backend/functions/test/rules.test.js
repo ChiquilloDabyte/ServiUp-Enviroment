@@ -14,12 +14,18 @@ const {
   initializeTestEnvironment,
 } = require("@firebase/rules-unit-testing");
 const {
+  collection,
+  deleteField,
   GeoPoint,
   doc,
   getDoc,
+  getDocs,
+  orderBy,
+  query,
   serverTimestamp,
   setDoc,
   updateDoc,
+  where,
 } = require("firebase/firestore");
 
 const projectId = "serviup";
@@ -68,6 +74,14 @@ beforeEach(async () => {
         role: "client",
         rating: 0,
         ratingCount: 0,
+      }),
+      setDoc(doc(db, "users/provider-legacy"), {
+        email: "legacy@example.com",
+        role: "provider",
+        name: "Prestador antiguo",
+        phone: "3222222222",
+        serviceCategories: ["Plomería"],
+        profileComplete: true,
       }),
       setDoc(doc(db, `service_requests/${requestId}`), {
         clientId: "client-1",
@@ -138,6 +152,26 @@ describe("perfiles privados y proyecciones", () => {
     );
   });
 
+  test("un perfil antiguo puede actualizar solo su token FCM", async () => {
+    const db = testEnv.authenticatedContext("provider-legacy").firestore();
+    await assertSucceeds(
+      setDoc(
+        doc(db, "users/provider-legacy"),
+        {fcmToken: "token-actualizado"},
+        {merge: true},
+      ),
+    );
+  });
+
+  test("el propietario elimina su token FCM al cerrar sesión", async () => {
+    const db = testEnv.authenticatedContext("provider-legacy").firestore();
+    const profile = doc(db, "users/provider-legacy");
+    await assertSucceeds(
+      setDoc(profile, {fcmToken: "token-activo"}, {merge: true}),
+    );
+    await assertSucceeds(updateDoc(profile, {fcmToken: deleteField()}));
+  });
+
   test("un autenticado lee la proyección pero no la escribe", async () => {
     const db = testEnv.authenticatedContext("client-1").firestore();
     const profile = doc(db, "provider_public_profiles/provider-1");
@@ -153,6 +187,16 @@ describe("solicitudes privadas y listados", () => {
       getDoc(doc(db, `open_request_listings/${requestId}`)),
     );
     await assertFails(getDoc(doc(db, `service_requests/${requestId}`)));
+  });
+
+  test("un prestador consulta los listados abiertos por fecha", async () => {
+    const db = testEnv.authenticatedContext("provider-legacy").firestore();
+    const listings = query(
+      collection(db, "open_request_listings"),
+      where("status", "==", "open"),
+      orderBy("createdAt", "desc"),
+    );
+    await assertSucceeds(getDocs(listings));
   });
 
   test("solo un cliente crea solicitudes", async () => {

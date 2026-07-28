@@ -45,6 +45,9 @@ final Provider<LocationRepository> locationServiceProvider =
 final mapsConfigServiceProvider = Provider<MapsConfigService>(
   (ref) => MapsConfigService(),
 );
+final mapsConfigurationProvider = FutureProvider<void>((ref) async {
+  await ref.watch(mapsConfigServiceProvider).getApiKey();
+});
 final placesServiceProvider = Provider<PlacesService>((ref) {
   return GooglePlacesService(
     mapsConfigService: ref.watch(mapsConfigServiceProvider),
@@ -140,17 +143,23 @@ final providerSyncRepositoryProvider = Provider<ProviderSyncRepository>((ref) {
 final Provider<ProviderSyncRepository> syncServiceProvider =
     providerSyncRepositoryProvider;
 
+/// Prevents authenticated data subscriptions from being recreated while the
+/// Firebase session is being revoked.
+final sessionDataEnabledProvider = StateProvider<bool>((ref) => true);
+
 final authStateProvider = StreamProvider<User?>((ref) {
   return ref.watch(authRepositoryProvider).authStateChanges();
 });
 
 final currentUserProfileProvider = StreamProvider<UserModel?>((ref) {
+  if (!ref.watch(sessionDataEnabledProvider)) return const Stream.empty();
   final authState = ref.watch(authStateProvider).value;
   if (authState == null) return const Stream.empty();
   return ref.watch(userRepositoryProvider).watchUser(authState.uid);
 });
 
 final fcmTokenRefreshProvider = Provider<void>((ref) {
+  if (!ref.watch(sessionDataEnabledProvider)) return;
   final repository = ref.watch(authRepositoryProvider);
   final subscription = repository.onFcmTokenRefresh.listen(
     repository.syncFcmToken,

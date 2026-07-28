@@ -9,7 +9,7 @@ Marketplace móvil en Flutter que conecta clientes con prestadores de servicios.
 
 ## Requisitos
 
-- Flutter SDK estable (Dart ^3.12)
+- Flutter SDK estable (Dart ^3.7)
 - Firebase CLI
 - Cuenta de Firebase proyecto `serviup`
 
@@ -24,11 +24,21 @@ dart run build_runner build --delete-conflicting-outputs
 ### Android
 
 - Application ID: `com.teamMaster.ServiUp`
-- Google Maps API key en `android/app/src/main/AndroidManifest.xml`
+- Agrega la clave restringida de Google Maps a `android/local.properties`
+  (archivo local ignorado por Git):
+
+```properties
+MAPS_API_KEY=valor_local
+```
 
 ### iOS
 
 - `GoogleService-Info.plist` en `ios/Runner/`
+- Crea `ios/Flutter/Secrets.xcconfig` (archivo local ignorado por Git):
+
+```text
+GOOGLE_MAPS_API_KEY=valor_local
+```
 
 ## Ejecutar
 

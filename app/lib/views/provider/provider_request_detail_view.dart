@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../config/route_arguments.dart';
 import '../../core/theme/app_dimensions.dart';
 import '../../domain/providers/app_providers.dart';
 import '../../domain/viewmodels/offer_viewmodel.dart';
@@ -105,6 +106,15 @@ class _ProviderRequestDetailViewState
                 RequestMapPreview(
                   latitude: item.latitude,
                   longitude: item.longitude,
+                  onOpenMap:
+                      () => context.push(
+                        '/request-location',
+                        extra: RequestLocationMapArgs(
+                          latitude: item.latitude,
+                          longitude: item.longitude,
+                          address: item.address,
+                        ),
+                      ),
                 ),
                 if (item.status == RequestStatus.open) ...[
                   const SizedBox(height: AppSpacing.lg),

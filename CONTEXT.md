@@ -42,6 +42,9 @@ Las normas obligatorias de arquitectura, calidad, seguridad y estilo están en
 - Sistema visual Organic Utility aplicado a los flujos de identidad,
   solicitudes, listados, negociación, chat, notificaciones, modo offline y
   textos legales.
+- Dashboard por rol: los clientes exploran prestadores mediante perfiles
+  públicos y conservan sus solicitudes; los prestadores buscan solicitudes
+  cercanas y administran sus trabajos activos.
 
 La presencia de código indica que estas funciones están implementadas, pero no
 equivale por sí sola a validación completa para producción.
@@ -187,6 +190,7 @@ Las rutas declaradas incluyen:
 - `/home`
 - `/requests/create`, `/requests/:id`
 - `/provider/requests/:id`
+- `/request-location`
 - `/chats`, `/chats/:id`
 - `/notifications`
 - `/offline`
@@ -335,6 +339,9 @@ Cambios de arquitectura y dominio:
 - App Check se inicializa en Flutter; su exigencia en producción se habilitará
   gradualmente después de configurar y verificar los proveedores de cada
   plataforma.
+- El cierre de sesión desactiva primero las suscripciones autenticadas de
+  Riverpod y después revoca Firebase Auth, evitando consultas Firestore
+  residuales sin permisos durante la transición.
 - El directorio Isar se sincroniza desde `provider_public_profiles`.
 - Los listados crecientes exponen un tamaño de página predeterminado de 20.
 
@@ -349,6 +356,14 @@ Maps/firma están documentados en
 
 Riesgos técnicos todavía controlados:
 
+- El feed de solicitudes cercanas requiere dos índices de
+  `open_request_listings` que solo difieren en la dirección de `__name__`: la
+  consulta normal usa `DESCENDING` implícito y la paginación con cursor usa
+  `ASCENDING` explícito. Ambos deben desplegarse.
+- Las reglas permiten actualizar exclusivamente `fcmToken` en perfiles
+  anteriores a `ratingCount`; esto mantiene el inicio de sesión compatible
+  mientras se completa la migración. La sincronización del token es de mejor
+  esfuerzo y no bloquea la sesión ni reporta un fallo fatal.
 - `npm audit --omit=dev` conserva ocho avisos moderados transitivos cuya única
   corrección propuesta requiere actualizar `firebase-admin` a una versión
   mayor; la vulnerabilidad alta y la baja corregibles sin salto mayor sí

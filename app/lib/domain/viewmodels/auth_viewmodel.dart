@@ -16,6 +16,7 @@ class AuthViewModel extends Notifier<AsyncValue<void>> {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       await ref.read(authRepositoryProvider).signIn(email, password);
+      ref.read(sessionDataEnabledProvider.notifier).state = true;
     });
     if (state.hasError) throw state.error!;
   }
@@ -31,13 +32,27 @@ class AuthViewModel extends Notifier<AsyncValue<void>> {
       user = await ref
           .read(authRepositoryProvider)
           .signUp(email: email, password: password, role: role);
+      ref.read(sessionDataEnabledProvider.notifier).state = true;
     });
     if (state.hasError) throw state.error!;
     return user;
   }
 
   Future<void> signOut() async {
-    await ref.read(authRepositoryProvider).signOut();
+    state = const AsyncLoading();
+    ref.read(sessionDataEnabledProvider.notifier).state = false;
+
+    // Give dependent auto-dispose providers a turn to cancel their Firestore
+    // subscriptions before Firebase Auth revokes their permissions.
+    await Future<void>.delayed(Duration.zero);
+
+    state = await AsyncValue.guard(() async {
+      await ref.read(authRepositoryProvider).signOut();
+    });
+    if (state.hasError) {
+      ref.read(sessionDataEnabledProvider.notifier).state = true;
+      throw state.error!;
+    }
   }
 
   Future<void> resetPassword(String email) async {

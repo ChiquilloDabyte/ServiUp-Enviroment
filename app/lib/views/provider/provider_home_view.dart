@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -21,9 +23,12 @@ class ProviderHomeView extends ConsumerStatefulWidget {
 }
 
 class _ProviderHomeViewState extends ConsumerState<ProviderHomeView> {
-  String? _categoryFilter;
+  final _searchController = TextEditingController();
+  Timer? _debounce;
   double? _lat;
   double? _lng;
+  Object? _locationError;
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -31,15 +36,36 @@ class _ProviderHomeViewState extends ConsumerState<ProviderHomeView> {
     _loadLocation();
   }
 
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadLocation() async {
+    setState(() => _locationError = null);
     try {
       final location =
           await ref.read(locationServiceProvider).getCurrentLocation();
+      if (!mounted) return;
       setState(() {
         _lat = location.latitude;
         _lng = location.longitude;
       });
-    } catch (_) {}
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _locationError = error);
+    }
+  }
+
+  void _onSearchChanged(String value) {
+    setState(() {});
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), () {
+      if (!mounted) return;
+      setState(() => _searchQuery = value.trim());
+    });
   }
 
   @override
@@ -50,11 +76,7 @@ class _ProviderHomeViewState extends ConsumerState<ProviderHomeView> {
     final AsyncValue<List<ServiceRequestModel>> nearby =
         _lat != null && _lng != null
             ? ref.watch(
-              nearbyRequestsProvider((
-                lat: _lat!,
-                lng: _lng!,
-                category: _categoryFilter,
-              )),
+              nearbyRequestsProvider((lat: _lat!, lng: _lng!, category: null)),
             )
             : const AsyncValue<List<ServiceRequestModel>>.loading();
 
@@ -97,20 +119,17 @@ class _ProviderHomeViewState extends ConsumerState<ProviderHomeView> {
             Expanded(
               child: TabBarView(
                 children: [
-                  nearby.when(
-                    loading:
-                        () => const ResponsiveContent(child: LoadingView()),
-                    error:
-                        (error, _) => _RequestListError(
-                          message: repositoryErrorMessage(error),
-                        ),
-                    data:
-                        (requests) => _ProviderRequestList(
-                          requests: requests,
-                          emptyTitle: 'No hay solicitudes cercanas',
-                          emptyMessage:
-                              'Las nuevas oportunidades aparecerán aquí.',
-                        ),
+                  _NearbyRequests(
+                    requests: nearby,
+                    locationError: _locationError,
+                    searchQuery: _searchQuery,
+                    searchController: _searchController,
+                    onSearchChanged: _onSearchChanged,
+                    onClearSearch: () {
+                      _searchController.clear();
+                      _onSearchChanged('');
+                    },
+                    onRetryLocation: _loadLocation,
                   ),
                   user == null
                       ? const ResponsiveContent(child: LoadingView())
@@ -139,6 +158,103 @@ class _ProviderHomeViewState extends ConsumerState<ProviderHomeView> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _NearbyRequests extends StatelessWidget {
+  const _NearbyRequests({
+    required this.requests,
+    required this.locationError,
+    required this.searchQuery,
+    required this.searchController,
+    required this.onSearchChanged,
+    required this.onClearSearch,
+    required this.onRetryLocation,
+  });
+
+  final AsyncValue<List<ServiceRequestModel>> requests;
+  final Object? locationError;
+  final String searchQuery;
+  final TextEditingController searchController;
+  final ValueChanged<String> onSearchChanged;
+  final VoidCallback onClearSearch;
+  final VoidCallback onRetryLocation;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        ResponsiveContent(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.mobileMargin,
+            AppSpacing.gutter,
+            AppSpacing.mobileMargin,
+            0,
+          ),
+          child: TextField(
+            controller: searchController,
+            onChanged: onSearchChanged,
+            textInputAction: TextInputAction.search,
+            decoration: InputDecoration(
+              hintText: 'Buscar por categoría o descripción',
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon:
+                  searchController.text.isEmpty
+                      ? null
+                      : IconButton(
+                        tooltip: 'Limpiar búsqueda',
+                        onPressed: onClearSearch,
+                        icon: const Icon(Icons.clear),
+                      ),
+              border: const OutlineInputBorder(),
+            ),
+          ),
+        ),
+        Expanded(
+          child:
+              locationError != null
+                  ? ResponsiveContent(
+                    child: EmptyState(
+                      icon: Icons.location_off_outlined,
+                      title: 'No pudimos obtener tu ubicación',
+                      message:
+                          'Activa el permiso de ubicación para buscar '
+                          'solicitudes cercanas.',
+                      action: FilledButton.icon(
+                        onPressed: onRetryLocation,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Reintentar'),
+                      ),
+                    ),
+                  )
+                  : requests.when(
+                    loading:
+                        () => const ResponsiveContent(child: LoadingView()),
+                    error:
+                        (error, _) => _RequestListError(
+                          message: repositoryErrorMessage(error),
+                        ),
+                    data: (items) {
+                      final filtered =
+                          items
+                              .where(
+                                (request) =>
+                                    requestMatchesSearch(request, searchQuery),
+                              )
+                              .toList();
+                      return _ProviderRequestList(
+                        requests: filtered,
+                        emptyTitle: 'No hay solicitudes cercanas',
+                        emptyMessage:
+                            searchQuery.isEmpty
+                                ? 'Las nuevas oportunidades aparecerán aquí.'
+                                : 'Prueba con otra categoría o descripción.',
+                      );
+                    },
+                  ),
+        ),
+      ],
     );
   }
 }

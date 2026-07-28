@@ -75,19 +75,34 @@ service cloud.firestore {
           'fcmToken',
           'updatedAt'
         ])
-        && request.resource.data.role == resource.data.role
-        && request.resource.data.rating == resource.data.rating
-        && request.resource.data.ratingCount == resource.data.ratingCount
         && (
-          !request.resource.data.profileComplete ||
           (
-            request.resource.data.name is string &&
-            request.resource.data.name.size() > 0 &&
-            request.resource.data.phone is string &&
-            request.resource.data.phone.size() > 0 &&
+            request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['fcmToken']) &&
             (
-              request.resource.data.role != 'provider' ||
-              request.resource.data.serviceCategories.size() > 0
+              !request.resource.data.keys().hasAny(['fcmToken']) ||
+              (
+                request.resource.data.fcmToken is string &&
+                request.resource.data.fcmToken.size() <= 4096
+              )
+            )
+          ) ||
+          (
+            request.resource.data.role == resource.data.role &&
+            request.resource.data.rating == resource.data.rating &&
+            request.resource.data.ratingCount == resource.data.ratingCount &&
+            (
+              !request.resource.data.profileComplete ||
+              (
+                request.resource.data.name is string &&
+                request.resource.data.name.size() > 0 &&
+                request.resource.data.phone is string &&
+                request.resource.data.phone.size() > 0 &&
+                (
+                  request.resource.data.role != 'provider' ||
+                  request.resource.data.serviceCategories.size() > 0
+                )
+              )
             )
           )
         );

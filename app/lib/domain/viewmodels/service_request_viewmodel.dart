@@ -54,6 +54,7 @@ final serviceRequestViewModelProvider =
 
 final clientRequestsProvider = StreamProvider.autoDispose
     .family<List<ServiceRequestModel>, String>((ref, clientId) {
+      if (!ref.watch(sessionDataEnabledProvider)) return const Stream.empty();
       return ref
           .watch(serviceRequestRepositoryProvider)
           .watchClientRequests(clientId);
@@ -61,11 +62,13 @@ final clientRequestsProvider = StreamProvider.autoDispose
 
 final openRequestsProvider =
     StreamProvider.autoDispose<List<ServiceRequestModel>>((ref) {
+      if (!ref.watch(sessionDataEnabledProvider)) return const Stream.empty();
       return ref.watch(serviceRequestRepositoryProvider).watchOpenRequests();
     });
 
 final requestDetailProvider = StreamProvider.autoDispose
     .family<ServiceRequestModel?, String>((ref, requestId) {
+      if (!ref.watch(sessionDataEnabledProvider)) return const Stream.empty();
       return ref
           .watch(serviceRequestRepositoryProvider)
           .watchRequest(requestId);
@@ -73,6 +76,7 @@ final requestDetailProvider = StreamProvider.autoDispose
 
 final providerRequestDetailProvider = StreamProvider.autoDispose
     .family<ServiceRequestModel?, String>((ref, requestId) {
+      if (!ref.watch(sessionDataEnabledProvider)) return const Stream.empty();
       return ref
           .watch(serviceRequestRepositoryProvider)
           .watchProviderRequest(requestId);
@@ -82,6 +86,9 @@ final nearbyRequestsProvider = FutureProvider.autoDispose.family<
   List<ServiceRequestModel>,
   ({double lat, double lng, String? category})
 >((ref, params) {
+  if (!ref.watch(sessionDataEnabledProvider)) {
+    return Future.value(const <ServiceRequestModel>[]);
+  }
   return ref
       .read(serviceRequestRepositoryProvider)
       .getNearbyOpenRequests(
@@ -93,10 +100,20 @@ final nearbyRequestsProvider = FutureProvider.autoDispose.family<
 
 final providerActiveJobsProvider = StreamProvider.autoDispose
     .family<List<ServiceRequestModel>, String>((ref, providerId) {
+      if (!ref.watch(sessionDataEnabledProvider)) return const Stream.empty();
       return ref
           .watch(serviceRequestRepositoryProvider)
           .watchProviderActiveJobs(providerId);
     });
+
+bool requestMatchesSearch(ServiceRequestModel request, String query) {
+  final normalizedQuery = query.trim().toLowerCase();
+  if (normalizedQuery.isEmpty) return true;
+
+  return request.category.toLowerCase().contains(normalizedQuery) ||
+      request.description.toLowerCase().contains(normalizedQuery) ||
+      request.address.toLowerCase().contains(normalizedQuery);
+}
 
 String repositoryErrorMessage(Object error) {
   if (error is AppException) return error.message;

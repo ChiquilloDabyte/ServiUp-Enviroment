@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../config/route_arguments.dart';
 import '../../core/theme/app_dimensions.dart';
 import '../../domain/providers/app_providers.dart';
 import '../../domain/viewmodels/chat_viewmodel.dart';
@@ -96,6 +97,15 @@ class ClientRequestDetailView extends ConsumerWidget {
                 RequestMapPreview(
                   latitude: item.latitude,
                   longitude: item.longitude,
+                  onOpenMap:
+                      () => context.push(
+                        '/request-location',
+                        extra: RequestLocationMapArgs(
+                          latitude: item.latitude,
+                          longitude: item.longitude,
+                          address: item.address,
+                        ),
+                      ),
                 ),
                 if (item.status == RequestStatus.pendingConfirmation &&
                     user?.id == item.clientId) ...[

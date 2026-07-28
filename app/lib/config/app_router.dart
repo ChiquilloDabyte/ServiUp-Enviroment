@@ -16,8 +16,46 @@ import '../views/offline/offline_providers_view.dart';
 import '../views/onboarding/onboarding_view.dart';
 import '../views/legal/privacy_policy_view.dart';
 import '../views/legal/terms_conditions_view.dart';
+import '../views/maps/request_location_map_view.dart';
 import '../views/provider/provider_request_detail_view.dart';
 import '../views/splash/splash_view.dart';
+import 'route_arguments.dart';
+
+enum AuthRouteState { loading, signedOut, signedIn }
+
+enum ProfileRouteState { loading, error, missing, incomplete, complete }
+
+String? resolveAppRedirect({
+  required String matchedLocation,
+  required AuthRouteState authState,
+  required ProfileRouteState profileState,
+}) {
+  if (matchedLocation == '/splash') return null;
+
+  final loggingIn =
+      matchedLocation == '/login' ||
+      matchedLocation == '/register' ||
+      matchedLocation == '/forgot-password';
+  final isPublicLegal =
+      matchedLocation == '/terms' || matchedLocation == '/privacy';
+
+  if (authState == AuthRouteState.loading) return null;
+  if (authState == AuthRouteState.signedOut) {
+    return loggingIn || isPublicLegal ? null : '/login';
+  }
+
+  if (profileState == ProfileRouteState.loading) return null;
+  if (profileState == ProfileRouteState.error) {
+    return loggingIn ? '/home' : null;
+  }
+  if (profileState == ProfileRouteState.missing ||
+      profileState == ProfileRouteState.incomplete) {
+    return matchedLocation == '/onboarding' ? null : '/onboarding';
+  }
+  if (loggingIn || matchedLocation == '/onboarding') return '/home';
+
+  return null;
+}
 
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = _RouterRefresh(ref);
@@ -29,33 +67,34 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final authState = ref.read(authStateProvider);
       final profile = ref.read(currentUserProfileProvider);
-      final isSplash = state.matchedLocation == '/splash';
-      if (isSplash) return null;
 
-      final user = authState.value;
-      final loggingIn =
-          state.matchedLocation == '/login' ||
-          state.matchedLocation == '/register' ||
-          state.matchedLocation == '/forgot-password';
-      final isPublicLegal =
-          state.matchedLocation == '/terms' ||
-          state.matchedLocation == '/privacy';
+      final authRouteState =
+          !authState.hasValue
+              ? AuthRouteState.loading
+              : authState.value == null
+              ? AuthRouteState.signedOut
+              : AuthRouteState.signedIn;
 
-      if (user == null) {
-        return loggingIn || isPublicLegal ? null : '/login';
+      final ProfileRouteState profileRouteState;
+      if (profile.hasError && !profile.hasValue) {
+        profileRouteState = ProfileRouteState.error;
+      } else if (!profile.hasValue) {
+        profileRouteState = ProfileRouteState.loading;
+      } else {
+        final userProfile = profile.value;
+        profileRouteState =
+            userProfile == null
+                ? ProfileRouteState.missing
+                : userProfile.profileComplete
+                ? ProfileRouteState.complete
+                : ProfileRouteState.incomplete;
       }
 
-      if (loggingIn) {
-        return '/home';
-      }
-
-      final userProfile = profile.value;
-      if (profile.hasValue &&
-          (userProfile == null || !userProfile.profileComplete)) {
-        return state.matchedLocation == '/onboarding' ? null : '/onboarding';
-      }
-
-      return null;
+      return resolveAppRedirect(
+        matchedLocation: state.matchedLocation,
+        authState: authRouteState,
+        profileState: profileRouteState,
+      );
     },
     routes: [
       GoRoute(path: '/splash', builder: (context, state) => const SplashView()),
@@ -89,6 +128,15 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final id = state.pathParameters['id']!;
           return ProviderRequestDetailView(requestId: id);
+        },
+      ),
+      GoRoute(
+        path: '/request-location',
+        builder: (context, state) {
+          final extra = state.extra;
+          return RequestLocationMapView(
+            location: extra is RequestLocationMapArgs ? extra : null,
+          );
         },
       ),
       GoRoute(

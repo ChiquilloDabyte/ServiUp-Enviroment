@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -92,23 +93,41 @@ class AuthRepository {
     final uid = currentUser?.uid;
     if (uid != null) {
       try {
-        await _firestoreService.users.doc(uid).update({
-          'fcmToken': FieldValue.delete(),
-        });
-      } catch (error, stackTrace) {
-        AppLogger.warning('Could not clear FCM token', error, stackTrace);
-      }
-      try {
-        await _notificationService.deleteToken();
-      } catch (error, stackTrace) {
+        await Future.wait([
+          _clearRemoteFcmToken(uid),
+          _deleteLocalFcmToken(),
+        ]).timeout(const Duration(seconds: 2));
+      } on TimeoutException catch (error, stackTrace) {
         AppLogger.warning(
-          'Could not delete the local FCM token',
+          'FCM cleanup timed out during sign-out',
           error,
           stackTrace,
         );
       }
     }
     await _authService.signOut();
+  }
+
+  Future<void> _clearRemoteFcmToken(String uid) async {
+    try {
+      await _firestoreService.users.doc(uid).update({
+        'fcmToken': FieldValue.delete(),
+      });
+    } catch (error, stackTrace) {
+      AppLogger.warning('Could not clear FCM token', error, stackTrace);
+    }
+  }
+
+  Future<void> _deleteLocalFcmToken() async {
+    try {
+      await _notificationService.deleteToken();
+    } catch (error, stackTrace) {
+      AppLogger.warning(
+        'Could not delete the local FCM token',
+        error,
+        stackTrace,
+      );
+    }
   }
 
   Future<void> sendPasswordResetEmail(String email) =>
@@ -119,9 +138,13 @@ class AuthRepository {
     final token = refreshedToken ?? await _notificationService.getToken();
     if (uid == null || token == null) return;
 
-    await _firestoreService.users.doc(uid).set({
-      'fcmToken': token,
-    }, SetOptions(merge: true));
+    try {
+      await _firestoreService.users.doc(uid).set({
+        'fcmToken': token,
+      }, SetOptions(merge: true));
+    } catch (error, stackTrace) {
+      AppLogger.warning('Could not sync FCM token', error, stackTrace);
+    }
   }
 
   Stream<String> get onFcmTokenRefresh => _notificationService.onTokenRefresh;

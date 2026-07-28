@@ -14,10 +14,14 @@ class UserRepository {
   final FirestoreService _firestoreService;
 
   Stream<UserModel?> watchUser(String userId) {
-    return _firestoreService.users.doc(userId).snapshots().map((doc) {
-      if (!doc.exists) return null;
-      return UserModel.fromFirestore(doc);
-    });
+    return _firestoreService.users
+        .doc(userId)
+        .snapshots(includeMetadataChanges: true)
+        .where((doc) => doc.exists || !doc.metadata.isFromCache)
+        .map((doc) {
+          if (!doc.exists) return null;
+          return UserModel.fromFirestore(doc);
+        });
   }
 
   Future<UserModel?> getUser(String userId) async {
