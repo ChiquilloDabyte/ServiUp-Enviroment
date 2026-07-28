@@ -40,4 +40,32 @@ void main() {
       AppBreakpoints.maxContentWidth - (AppSpacing.md * 2),
     );
   });
+
+  testWidgets('supports centered content for splash surfaces', (tester) async {
+    tester.view.physicalSize = const Size(400, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: ResponsiveContent(
+            alignment: Alignment.center,
+            padding: EdgeInsets.zero,
+            child: SizedBox(
+              key: Key('centered-content'),
+              width: 100,
+              height: 100,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      tester.getTopLeft(find.byKey(const Key('centered-content'))),
+      const Offset(150, 350),
+    );
+  });
 }
