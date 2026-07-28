@@ -8,11 +8,13 @@ class ResponsiveContent extends StatelessWidget {
     required this.child,
     this.padding,
     this.maxWidth = AppBreakpoints.maxContentWidth,
+    this.alignment = Alignment.topCenter,
   });
 
   final Widget child;
   final EdgeInsetsGeometry? padding;
   final double maxWidth;
+  final AlignmentGeometry alignment;
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +25,7 @@ class ResponsiveContent extends StatelessWidget {
             : AppSpacing.mobileMargin;
 
     return Align(
-      alignment: Alignment.topCenter,
+      alignment: alignment,
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: maxWidth),
         child: Padding(

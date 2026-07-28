@@ -1,11 +1,11 @@
 {
-    "name": "flutter_application_1",
-    "short_name": "flutter_application_1",
+    "name": "ServiUp",
+    "short_name": "ServiUp",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#F8FBEE",
+    "theme_color": "#50752D",
+    "description": "Marketplace de servicios entre clientes y prestadores.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

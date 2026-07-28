@@ -7,6 +7,7 @@ import '../../domain/viewmodels/auth_viewmodel.dart';
 import '../../widgets/error_banner.dart';
 import '../../widgets/responsive_content.dart';
 import '../../widgets/section_card.dart';
+import '../../widgets/serviup_logo.dart';
 
 class LoginView extends ConsumerStatefulWidget {
   const LoginView({super.key});
@@ -60,10 +61,11 @@ class _LoginViewState extends ConsumerState<LoginView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Icon(
-                  Icons.handyman_rounded,
-                  size: 48,
-                  color: theme.colorScheme.primary,
+                const Center(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: ServiUpLogo(height: 72),
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.gutter),
                 Text(
