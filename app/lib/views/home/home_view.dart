@@ -18,9 +18,9 @@ class HomeView extends ConsumerWidget {
 
     return profile.when(
       loading: () => const Scaffold(body: LoadingView()),
-      error: (error, _) => Scaffold(
-        body: Center(child: Text(authErrorMessage(error))),
-      ),
+      error:
+          (error, _) =>
+              Scaffold(body: Center(child: Text(authErrorMessage(error)))),
       data: (user) {
         if (user == null) {
           return const Scaffold(body: Center(child: Text('Sin sesión')));
@@ -30,7 +30,9 @@ class HomeView extends ConsumerWidget {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted) context.go('/onboarding');
           });
-          return const Scaffold(body: LoadingView(message: 'Completando perfil...'));
+          return const Scaffold(
+            body: LoadingView(message: 'Completando perfil...'),
+          );
         }
 
         return user.role == UserRole.client

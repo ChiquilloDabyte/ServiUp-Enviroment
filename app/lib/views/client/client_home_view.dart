@@ -68,16 +68,6 @@ class _ClientHomeViewState extends ConsumerState<ClientHomeView> {
           ),
           actions: [
             IconButton(
-              tooltip: 'Mi perfil',
-              icon: const Icon(Icons.person_outline),
-              onPressed: () => context.push('/profile'),
-            ),
-            IconButton(
-              tooltip: 'Conversaciones',
-              icon: const Icon(Icons.chat_bubble_outline),
-              onPressed: () => context.push('/chats'),
-            ),
-            IconButton(
               tooltip: 'Notificaciones',
               icon: const Icon(Icons.notifications_outlined),
               onPressed: () => context.push('/notifications'),
@@ -234,11 +224,6 @@ class _ClientRequests extends StatelessWidget {
               icon: Icons.handyman_outlined,
               title: 'Aún no tienes solicitudes',
               message: 'Publica la primera y encuentra ayuda cerca.',
-              action: FilledButton.icon(
-                onPressed: () => context.push('/requests/create'),
-                icon: const Icon(Icons.add),
-                label: const Text('Nueva solicitud'),
-              ),
             ),
           );
         }

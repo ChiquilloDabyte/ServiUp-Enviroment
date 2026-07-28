@@ -22,6 +22,7 @@ import '../views/profile/edit_profile_view.dart';
 import '../views/profile/profile_view.dart';
 import '../views/review/service_review_view.dart';
 import '../views/splash/splash_view.dart';
+import '../widgets/main_navigation_shell.dart';
 import 'route_arguments.dart';
 
 enum AuthRouteState { loading, signedOut, signedIn }
@@ -114,10 +115,45 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/onboarding',
         builder: (context, state) => const OnboardingView(),
       ),
-      GoRoute(path: '/home', builder: (context, state) => const HomeView()),
-      GoRoute(
-        path: '/profile',
-        builder: (context, state) => const ProfileView(),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return MainNavigationShell(
+            currentIndex: navigationShell.currentIndex,
+            onDestinationSelected: (index) {
+              navigationShell.goBranch(
+                index,
+                initialLocation: index == navigationShell.currentIndex,
+              );
+            },
+            child: navigationShell,
+          );
+        },
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/home',
+                builder: (context, state) => const HomeView(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/chats',
+                builder: (context, state) => const ChatsView(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/profile',
+                builder: (context, state) => const ProfileView(),
+              ),
+            ],
+          ),
+        ],
       ),
       GoRoute(
         path: '/profile/edit',
@@ -160,7 +196,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/notifications',
         builder: (context, state) => const NotificationsView(),
       ),
-      GoRoute(path: '/chats', builder: (context, state) => const ChatsView()),
       GoRoute(
         path: '/chats/:id',
         builder: (context, state) {

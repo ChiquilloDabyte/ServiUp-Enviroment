@@ -49,6 +49,8 @@ Las normas obligatorias de arquitectura, calidad, seguridad y estilo están en
   prestador, mediante el contrato acotado `ProfileUpdate`.
 - Calificación única del cliente después de completar el servicio, persistida
   como `reviews/{requestId}`.
+- Navegación principal persistente mediante una barra inferior con acceso al
+  dashboard, las conversaciones y el perfil para ambos roles.
 
 La presencia de código indica que estas funciones están implementadas, pero no
 equivale por sí sola a validación completa para producción.
@@ -201,6 +203,10 @@ Las rutas declaradas incluyen:
 - `/notifications`
 - `/offline`
 - `/terms`, `/privacy`
+
+Las rutas `/home`, `/chats` y `/profile` comparten una barra de navegación
+inferior. Los detalles de chat, la edición del perfil y los demás flujos
+secundarios se presentan fuera de esa barra.
 
 Una sesión ausente redirige a login. Una sesión válida con perfil incompleto
 redirige a onboarding.
