@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:serviup/views/dashboard/dashboard_view.dart';
 
 import '../../domain/providers/app_providers.dart';
 import '../../domain/viewmodels/auth_viewmodel.dart';
@@ -33,9 +34,12 @@ class HomeView extends ConsumerWidget {
           return const Scaffold(body: LoadingView(message: 'Completando perfil...'));
         }
 
-        return user.role == UserRole.client
-            ? const ClientHomeView()
-            : const ProviderHomeView();
+        /*return user.role == UserRole.client
+            ? const ClientHomeView() // NOTE: this will be removed because is the same dashboardView
+            : const ProviderHomeView();  /* NOTE: this view will be removed because it will be the same ordersView.*/
+        */
+        return const dashboardView();
+
       },
     );
   }
