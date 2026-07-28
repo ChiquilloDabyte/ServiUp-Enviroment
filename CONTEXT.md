@@ -45,6 +45,10 @@ Las normas obligatorias de arquitectura, calidad, seguridad y estilo están en
 - Dashboard por rol: los clientes exploran prestadores mediante perfiles
   públicos y conservan sus solicitudes; los prestadores buscan solicitudes
   cercanas y administran sus trabajos activos.
+- Consulta y edición del perfil propio, incluida foto y categorías del
+  prestador, mediante el contrato acotado `ProfileUpdate`.
+- Calificación única del cliente después de completar el servicio, persistida
+  como `reviews/{requestId}`.
 
 La presencia de código indica que estas funciones están implementadas, pero no
 equivale por sí sola a validación completa para producción.
@@ -188,7 +192,9 @@ Las rutas declaradas incluyen:
 - `/login`, `/register`, `/forgot-password`
 - `/onboarding`
 - `/home`
+- `/profile`, `/profile/edit`
 - `/requests/create`, `/requests/:id`
+- `/requests/:id/review`
 - `/provider/requests/:id`
 - `/request-location`
 - `/chats`, `/chats/:id`
@@ -345,10 +351,9 @@ Cambios de arquitectura y dominio:
 - El directorio Isar se sincroniza desde `provider_public_profiles`.
 - Los listados crecientes exponen un tamaño de página predeterminado de 20.
 
-La integración futura de `juan-david` será un portado manual desde una rama
-nueva basada en `develop`; no se fusionará directamente. Sus vistas de perfil
-deben usar el contrato acotado `ProfileUpdate` y la interfaz de calificación
-debe respetar `reviews/{requestId}`.
+La integración de `juan-david` se portó manualmente sobre `develop` para
+preservar la estabilización. Las vistas de perfil usan el contrato acotado
+`ProfileUpdate` y la calificación respeta `reviews/{requestId}`.
 
 El orden de despliegue, la migración de proyecciones y la configuración de
 Maps/firma están documentados en

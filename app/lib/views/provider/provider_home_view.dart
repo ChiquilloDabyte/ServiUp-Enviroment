@@ -90,6 +90,11 @@ class _ProviderHomeViewState extends ConsumerState<ProviderHomeView> {
           ),
           actions: [
             IconButton(
+              tooltip: 'Mi perfil',
+              icon: const Icon(Icons.person_outline),
+              onPressed: () => context.push('/profile'),
+            ),
+            IconButton(
               tooltip: 'Conversaciones',
               icon: const Icon(Icons.chat_bubble_outline),
               onPressed: () => context.push('/chats'),

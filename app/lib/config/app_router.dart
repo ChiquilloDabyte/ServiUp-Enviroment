@@ -18,6 +18,9 @@ import '../views/legal/privacy_policy_view.dart';
 import '../views/legal/terms_conditions_view.dart';
 import '../views/maps/request_location_map_view.dart';
 import '../views/provider/provider_request_detail_view.dart';
+import '../views/profile/edit_profile_view.dart';
+import '../views/profile/profile_view.dart';
+import '../views/review/service_review_view.dart';
 import '../views/splash/splash_view.dart';
 import 'route_arguments.dart';
 
@@ -113,6 +116,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(path: '/home', builder: (context, state) => const HomeView()),
       GoRoute(
+        path: '/profile',
+        builder: (context, state) => const ProfileView(),
+      ),
+      GoRoute(
+        path: '/profile/edit',
+        builder: (context, state) => const EditProfileView(),
+      ),
+      GoRoute(
         path: '/requests/create',
         builder: (context, state) => const CreateRequestView(),
       ),
@@ -121,6 +132,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final id = state.pathParameters['id']!;
           return ClientRequestDetailView(requestId: id);
+        },
+      ),
+      GoRoute(
+        path: '/requests/:id/review',
+        builder: (context, state) {
+          return ServiceReviewView(requestId: state.pathParameters['id']!);
         },
       ),
       GoRoute(

@@ -240,7 +240,11 @@ service cloud.firestore {
     }
 
     match /reviews/{reviewId} {
-      allow read: if isSignedIn() && (
+      allow get: if isSignedIn() && (
+        requestFor(reviewId).clientId == request.auth.uid ||
+        requestFor(reviewId).acceptedProviderId == request.auth.uid
+      );
+      allow list: if isSignedIn() && (
         resource.data.clientId == request.auth.uid ||
         resource.data.providerId == request.auth.uid
       );

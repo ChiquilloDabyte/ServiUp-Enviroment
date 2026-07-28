@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:serviup/domain/providers/app_providers.dart';
 import 'package:serviup/domain/viewmodels/offer_viewmodel.dart';
+import 'package:serviup/domain/viewmodels/review_viewmodel.dart';
 import 'package:serviup/domain/viewmodels/service_request_viewmodel.dart';
 import 'package:serviup/models/enums/request_status.dart';
 import 'package:serviup/models/enums/user_role.dart';
@@ -107,4 +108,44 @@ void main() {
     expect(find.text('Solicitar confirmación'), findsOneWidget);
     expect(find.text('Marcar como completado'), findsNothing);
   });
+
+  testWidgets(
+    'el cliente puede calificar un servicio completado una sola vez',
+    (tester) async {
+      const client = UserModel(
+        id: 'client-1',
+        email: 'client@example.com',
+        role: UserRole.client,
+        name: 'Cliente',
+        phone: '3000000000',
+      );
+      await tester.binding.setSurfaceSize(const Size(900, 1200));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            requestDetailProvider(requestId).overrideWith(
+              (ref) => Stream.value(request(RequestStatus.completed)),
+            ),
+            requestOffersProvider(
+              requestId,
+            ).overrideWith((ref) => Stream.value(const [])),
+            reviewDetailProvider(
+              requestId,
+            ).overrideWith((ref) => Stream.value(null)),
+            currentUserProfileProvider.overrideWith(
+              (ref) => Stream.value(client),
+            ),
+          ],
+          child: const MaterialApp(
+            home: ClientRequestDetailView(requestId: requestId),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+    expect(find.text('Calificar servicio'), findsOneWidget);
+    },
+  );
 }

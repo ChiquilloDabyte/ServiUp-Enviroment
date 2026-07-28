@@ -7,6 +7,7 @@ import '../../core/theme/app_dimensions.dart';
 import '../../domain/providers/app_providers.dart';
 import '../../domain/viewmodels/chat_viewmodel.dart';
 import '../../domain/viewmodels/offer_viewmodel.dart';
+import '../../domain/viewmodels/review_viewmodel.dart';
 import '../../domain/viewmodels/service_request_viewmodel.dart';
 import '../../models/enums/offer_status.dart';
 import '../../models/enums/request_status.dart';
@@ -148,6 +149,49 @@ class ClientRequestDetailView extends ConsumerWidget {
                       '${item.completionReturnReason}',
                     ),
                   ),
+                ],
+                if (item.status == RequestStatus.completed &&
+                    user?.id == item.clientId) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  ref
+                      .watch(reviewDetailProvider(item.id))
+                      .when(
+                        loading: () => const LoadingView(),
+                        error: (error, _) => Text(reviewErrorMessage(error)),
+                        data:
+                            (review) => SectionCard(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Text(
+                                    review == null
+                                        ? 'Califica el servicio'
+                                        : 'Tu calificación',
+                                    style:
+                                        Theme.of(context).textTheme.titleMedium,
+                                  ),
+                                  const SizedBox(height: AppSpacing.xs),
+                                  Text(
+                                    review == null
+                                        ? 'Comparte tu experiencia con el '
+                                            'prestador.'
+                                        : '${review.rating} de 5 estrellas',
+                                  ),
+                                  if (review == null) ...[
+                                    const SizedBox(height: AppSpacing.sm),
+                                    FilledButton.icon(
+                                      onPressed:
+                                          () => context.push(
+                                            '/requests/${item.id}/review',
+                                          ),
+                                      icon: const Icon(Icons.star_outline),
+                                      label: const Text('Calificar servicio'),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                      ),
                 ],
                 if (item.status != RequestStatus.cancelled) ...[
                   const SizedBox(height: AppSpacing.lg),

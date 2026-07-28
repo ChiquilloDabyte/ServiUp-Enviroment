@@ -9,6 +9,7 @@ import '../../data/repositories/notification_repository.dart';
 import '../../data/repositories/offer_repository.dart';
 import '../../data/repositories/offline_repository.dart';
 import '../../data/repositories/provider_sync_repository.dart';
+import '../../data/repositories/review_repository.dart';
 import '../../data/repositories/service_request_repository.dart';
 import '../../data/repositories/user_repository.dart';
 import '../../data/services/analytics_service.dart';
@@ -119,6 +120,12 @@ final offerRepositoryProvider = Provider<OfferRepository>((ref) {
 
 final notificationRepositoryProvider = Provider<NotificationRepository>((ref) {
   return NotificationRepository(
+    firestoreService: ref.watch(firestoreServiceProvider),
+  );
+});
+
+final reviewRepositoryProvider = Provider<ReviewRepository>((ref) {
+  return ReviewRepository(
     firestoreService: ref.watch(firestoreServiceProvider),
   );
 });

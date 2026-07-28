@@ -290,6 +290,7 @@ describe("calificaciones reservadas", () => {
     });
     const client = testEnv.authenticatedContext("client-1").firestore();
     const provider = testEnv.authenticatedContext("provider-1").firestore();
+    const outsider = testEnv.authenticatedContext("outsider-1").firestore();
     const review = {
       requestId,
       clientId: "client-1",
@@ -298,6 +299,8 @@ describe("calificaciones reservadas", () => {
       comment: "Excelente servicio",
       createdAt: serverTimestamp(),
     };
+    await assertSucceeds(getDoc(doc(client, `reviews/${requestId}`)));
+    await assertFails(getDoc(doc(outsider, `reviews/${requestId}`)));
     await assertSucceeds(setDoc(doc(client, `reviews/${requestId}`), review));
     await assertFails(
       setDoc(doc(provider, "reviews/other-request"), {
