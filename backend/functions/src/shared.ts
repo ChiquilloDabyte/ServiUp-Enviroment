@@ -42,6 +42,22 @@ export function requireString(
 }
 
 /**
+ * Validates and normalizes a required phone number.
+ * Currently it only verifies that it is a required string.
+ * TODO: Additional phone validations will be added later.
+ *
+ * @param {unknown} value Raw callable value.
+ * @return {string} Trimmed validated phone number.
+ */
+export function requirePhone(value: unknown): string {
+  const phone = requireString(value, "phone");
+
+  // Set the future validations here
+
+    return phone;
+}
+
+/**
  * Loads the private domain profile for an authenticated user.
  * @param {string} uid Authenticated user identifier.
  */

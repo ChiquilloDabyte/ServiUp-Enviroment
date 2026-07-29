@@ -65,6 +65,24 @@ class UserRepository {
         'Selecciona al menos una categoría de servicio.',
       );
     }
+    // Validate duplicate phones
+    /*final phoneNumber = update.phone.trim(); It doesn't work for firestore rules, but I can change it to use documents
+
+    final existingPhoneNumberQuery = await _firestoreService.users
+      .where('phone', isEqualTo: phoneNumber)
+      .limit(1)
+      .get();
+
+    final duplicatePhone = existingPhoneNumberQuery.docs.any(
+      (doc) => doc.id != userId
+    );
+
+    if (duplicatePhone) {
+      throw const RepositoryException(
+        'El número de teléfono ya está registrado, verifícalo e intenta nuevamente por favor.'
+      );
+    }*/
+
 
     await _firestoreService.users.doc(userId).update(update.toFirestore());
   }

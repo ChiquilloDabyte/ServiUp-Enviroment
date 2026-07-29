@@ -13,6 +13,44 @@ import {
 
 type RequestData = Record<string, unknown>;
 
+// Add specific fieles interface for update profile request
+interface UpdateProfileRequest {
+  name: unknown;
+  phone: unknown;
+  photoUrl?: unknown;
+  latitude?: unknown;
+  longitude?: unknown;
+  serviceCategories?: unknown;
+}
+
+/**
+ * function to validate updateProfile feature and avoid duplicate numbers
+ */
+export const updateProfile = onCall(
+  {enforceAppCheck: false},
+  async (request) => {
+    // Authentication
+    const actorId = requireAuthUid(request.auth?.uid);
+
+    const actor = await requireUser(actorId);
+
+    const data = request.data as UpdateProfileRequest;
+
+    const name = requireString(data.name, "name");
+    const phone = requirePhone(data.phone);
+
+    // Read request
+
+    // Validate request
+
+    // Load current user
+
+    // Transaction
+
+    // Return result
+  },
+);
+
 /**
  * Builds the deterministic chat identifier for a request and provider.
  * @param {string} requestId Service request identifier.
