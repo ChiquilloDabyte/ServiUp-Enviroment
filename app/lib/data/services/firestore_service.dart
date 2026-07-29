@@ -15,6 +15,9 @@ class FirestoreService {
   CollectionReference<Map<String, dynamic>> get users =>
       collection(AppConstants.usersCollection);
 
+  CollectionReference<Map<String, dynamic>> get phoneIndexes =>
+      collection(AppConstants.phoneIndexesCollection);
+
   CollectionReference<Map<String, dynamic>> get providerPublicProfiles =>
       collection(AppConstants.providerPublicProfilesCollection);
 

@@ -3,6 +3,7 @@ class AppConstants {
 
   static const String appName = 'ServiUp';
   static const String usersCollection = 'users';
+  static const String phoneIndexesCollection = 'phone_indexes';
   static const String providerPublicProfilesCollection =
       'provider_public_profiles';
   static const String serviceRequestsCollection = 'service_requests';

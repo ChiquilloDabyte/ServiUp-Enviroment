@@ -66,7 +66,36 @@ class UserRepository {
       );
     }
 
-    await _firestoreService.users.doc(userId).update(update.toFirestore());
+    // await _firestoreService.users.doc(userId).update(update.toFirestore()); This was the previous code
+    // Create documents with users phone and validate it to avoid duplicate phones:
+
+    final phone = update.phone.trim();
+    final userRef = _firestoreService.users.doc(userId);
+    final phoneIndexRef = _firestoreService.phoneIndexes.doc(phone);
+        
+    await _firestoreService.runTransaction((transaction) async {
+      final userSnap = await transaction.get(userRef);
+      final phoneDoc = await transaction.get(phoneIndexRef);
+
+      // Validate if another user has the same phone number
+      if (phoneDoc.exists && phoneDoc.data()?['userId'] != userId) {
+        throw const RepositoryException(
+          'Este número de teléfono ya está registrado.',
+        );
+      }
+
+      // If the user had another phone number, liberate that previous phone number
+      final oldPhone = userSnap.data()?['phone'] as String?;
+      if (oldPhone != null && oldPhone.isNotEmpty && oldPhone != phone) {
+        final oldPhoneRef = _firestoreService.phoneIndexes.doc(oldPhone);
+        transaction.delete(oldPhoneRef);
+      }
+
+      transaction.set(phoneIndexRef, {
+        'userId': userId,
+      });
+      transaction.update(userRef, update.toFirestore());
+    });
   }
 
   Future<void> updateFcmToken(String userId, String token) async {
