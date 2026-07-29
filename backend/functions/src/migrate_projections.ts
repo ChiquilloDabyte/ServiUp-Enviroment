@@ -34,21 +34,51 @@ async function commitInChunks(
 /** Prints a dry-run summary and writes only when --apply is explicit. */
 async function main() {
   const apply = process.argv.includes("--apply");
-  const [users, requests] = await Promise.all([
-    db
-      .collection("users")
-      .where("role", "==", "provider")
-      .where("profileComplete", "==", true)
-      .get(),
+  const backupConfirmed = process.argv.includes("--backup-confirmed");
+  if (apply && !backupConfirmed) {
+    throw new Error(
+      "Exporta Firestore y vuelve a ejecutar con --apply --backup-confirmed.",
+    );
+  }
+
+  const [users, publicProfiles, requests] = await Promise.all([
+    db.collection("users").get(),
+    db.collection("provider_public_profiles").get(),
     db.collection("service_requests").get(),
   ]);
   const operations: Array<(batch: WriteBatch) => void> = [];
+  const eligibleProviderIds = new Set<string>();
+  let providerProfilesUpserted = 0;
+  let providerProfilesDeleted = 0;
+  let clientPhonesCleared = 0;
 
   for (const user of users.docs) {
     const data = user.data();
-    if (typeof data.phone !== "string" || data.phone.trim().length === 0) {
+    if (
+      data.role === "client" &&
+      typeof data.phone === "string" &&
+      data.phone.trim().length > 0
+    ) {
+      clientPhonesCleared++;
+      operations.push((batch) => {
+        batch.update(user.ref, {
+          phone: "",
+          phoneVerifiedAt: FieldValue.delete(),
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+      });
       continue;
     }
+    if (
+      data.role !== "provider" ||
+      data.profileComplete !== true ||
+      data.phoneVerifiedAt == null ||
+      typeof data.phone !== "string" ||
+      data.phone.trim().length === 0
+    ) continue;
+
+    eligibleProviderIds.add(user.id);
+    providerProfilesUpserted++;
     operations.push((batch) => {
       batch.set(db.collection("provider_public_profiles").doc(user.id), {
         name: data.name ?? "",
@@ -60,6 +90,12 @@ async function main() {
         updatedAt: FieldValue.serverTimestamp(),
       });
     });
+  }
+
+  for (const profile of publicProfiles.docs) {
+    if (eligibleProviderIds.has(profile.id)) continue;
+    providerProfilesDeleted++;
+    operations.push((batch) => batch.delete(profile.ref));
   }
 
   for (const serviceRequest of requests.docs) {
@@ -92,7 +128,10 @@ async function main() {
 
   console.log(JSON.stringify({
     mode: apply ? "apply" : "dry-run",
-    providerProfiles: users.size,
+    users: users.size,
+    providerProfilesUpserted,
+    providerProfilesDeleted,
+    clientPhonesCleared,
     requestListings: requests.size,
     writes: operations.length,
   }));

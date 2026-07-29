@@ -17,14 +17,15 @@ void main() {
       routes: [
         GoRoute(
           path: '/home',
-          builder: (context, state) => Scaffold(
-            body: Center(
-              child: FilledButton(
-                onPressed: () => context.push('/requests/$requestId'),
-                child: const Text('Abrir solicitud'),
+          builder:
+              (context, state) => Scaffold(
+                body: Center(
+                  child: FilledButton(
+                    onPressed: () => context.push('/requests/$requestId'),
+                    child: const Text('Abrir solicitud'),
+                  ),
+                ),
               ),
-            ),
-          ),
         ),
         GoRoute(
           path: '/requests/:id',

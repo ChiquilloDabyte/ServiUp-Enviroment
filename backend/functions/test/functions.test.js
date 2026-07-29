@@ -13,6 +13,7 @@ const projectId = "serviup";
 let testEnv;
 let db;
 let acceptOffer;
+let createProposal;
 let transitionServiceRequest;
 let notifyUser;
 
@@ -20,12 +21,13 @@ let notifyUser;
  * Builds the minimum v2 callable request used by direct handler tests.
  * @param {string} uid Authenticated test user.
  * @param {object} data Callable payload.
+ * @param {object} token Authentication token claims.
  * @return {object} Callable request.
  */
-function callableRequest(uid, data) {
+function callableRequest(uid, data, token = {}) {
   return {
     data,
-    auth: {uid, token: {}},
+    auth: {uid, token},
     app: undefined,
     instanceIdToken: undefined,
     rawRequest: {},
@@ -36,7 +38,11 @@ before(async () => {
   process.env.GCLOUD_PROJECT = projectId;
   testEnv = await initializeTestEnvironment({projectId});
   ({db, notifyUser} = require("../lib/shared.js"));
-  ({acceptOffer, transitionServiceRequest} = require("../lib/callables.js"));
+  ({
+    acceptOffer,
+    createProposal,
+    transitionServiceRequest,
+  } = require("../lib/callables.js"));
 });
 
 after(async () => {
@@ -177,4 +183,88 @@ test("una notificación con el mismo id solo se persiste una vez", async () => {
   await Promise.all([notifyUser(notification), notifyUser(notification)]);
   const snapshot = await db.collection("notifications").doc(id).get();
   assert.equal(snapshot.exists, true);
+});
+
+test("un prestador solo crea propuestas con identidad verificada", async () => {
+  const suffix = Date.now().toString();
+  const requestId = `verified-proposal-${suffix}`;
+  const clientId = `client-proposal-${suffix}`;
+  const providerId = `provider-proposal-${suffix}`;
+  const chatId = `${requestId}_${providerId}`;
+  const providerRef = db.collection("users").doc(providerId);
+  await Promise.all([
+    db.collection("users").doc(clientId).set({
+      role: "client",
+      name: "Cliente",
+    }),
+    providerRef.set({
+      role: "provider",
+      name: "Prestador",
+      phone: "+573111111111",
+      serviceCategories: ["Plomería"],
+      profileComplete: false,
+    }),
+    db.collection("service_requests").doc(requestId).set({
+      clientId,
+      status: "open",
+    }),
+  ]);
+  const payload = {
+    requestId,
+    providerId,
+    chatId,
+    proposedPrice: 120000,
+    conditions: "Incluye materiales.",
+  };
+
+  await assert.rejects(
+    createProposal.run(callableRequest(providerId, payload)),
+    (error) => error.details?.requirement === "profile",
+  );
+
+  await providerRef.update({
+    profileComplete: true,
+    serviceCategories: [],
+  });
+  await assert.rejects(
+    createProposal.run(callableRequest(providerId, payload)),
+    (error) => error.details?.requirement === "profile",
+  );
+
+  await providerRef.update({
+    serviceCategories: ["Plomería"],
+    phoneVerifiedAt: new Date(),
+  });
+  await assert.rejects(
+    createProposal.run(callableRequest(providerId, payload)),
+    (error) => error.details?.requirement === "email",
+  );
+  await assert.rejects(
+    createProposal.run(
+      callableRequest(providerId, payload, {
+        email_verified: true,
+        phone_number: "+573222222222",
+      }),
+    ),
+    (error) => error.details?.requirement === "phone",
+  );
+
+  const result = await createProposal.run(
+    callableRequest(providerId, payload, {
+      email_verified: true,
+      phone_number: "+573111111111",
+    }),
+  );
+  assert.ok(result.offerId);
+  const offer = await db.collection("offers").doc(result.offerId).get();
+  assert.equal(offer.data().providerId, providerId);
+
+  const counterProposal = await createProposal.run(
+    callableRequest(clientId, {
+      chatId,
+      proposedPrice: 110000,
+      conditions: "Acepto con ajuste de precio.",
+    }),
+  );
+  assert.ok(counterProposal.offerId);
 });

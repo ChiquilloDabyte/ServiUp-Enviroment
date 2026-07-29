@@ -152,6 +152,64 @@ describe("perfiles privados y proyecciones", () => {
     );
   });
 
+  test("solo un prestador sincroniza el teléfono de su token", async () => {
+    const verifiedProvider = testEnv.authenticatedContext("provider-1", {
+      phone_number: "+573111111111",
+    }).firestore();
+    const unverifiedProvider =
+      testEnv.authenticatedContext("provider-1").firestore();
+    const client = testEnv.authenticatedContext("client-1", {
+      phone_number: "+573001111111",
+    }).firestore();
+
+    await assertSucceeds(
+      updateDoc(doc(verifiedProvider, "users/provider-1"), {
+        phone: "+573111111111",
+        phoneVerifiedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(unverifiedProvider, "users/provider-1"), {
+        phone: "+573222222222",
+        phoneVerifiedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(client, "users/client-1"), {
+        phone: "+573001111111",
+        phoneVerifiedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      }),
+    );
+  });
+
+  test("un perfil se completa sin exigir teléfono", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), "users/provider-incomplete"), {
+        email: "incomplete@example.com",
+        role: "provider",
+        name: "",
+        phone: "",
+        serviceCategories: [],
+        rating: 0,
+        ratingCount: 0,
+        profileComplete: false,
+      });
+    });
+    const db =
+      testEnv.authenticatedContext("provider-incomplete").firestore();
+    await assertSucceeds(
+      updateDoc(doc(db, "users/provider-incomplete"), {
+        name: "Prestador nuevo",
+        serviceCategories: ["Plomería"],
+        profileComplete: true,
+        updatedAt: serverTimestamp(),
+      }),
+    );
+  });
+
   test("un perfil antiguo puede actualizar solo su token FCM", async () => {
     const db = testEnv.authenticatedContext("provider-legacy").firestore();
     await assertSucceeds(
@@ -213,7 +271,11 @@ describe("solicitudes privadas y listados", () => {
       price: null,
       createdAt: serverTimestamp(),
     };
-    const client = testEnv.authenticatedContext("client-1").firestore();
+    const client = testEnv.authenticatedContext("client-1", {
+      email_verified: true,
+    }).firestore();
+    const unverifiedClient =
+      testEnv.authenticatedContext("client-1").firestore();
     const provider = testEnv.authenticatedContext("provider-1").firestore();
     await assertSucceeds(
       setDoc(doc(client, "service_requests/request-2"), payload),
@@ -223,6 +285,26 @@ describe("solicitudes privadas y listados", () => {
         ...payload,
         clientId: "provider-1",
       }),
+    );
+    await assertFails(
+      setDoc(doc(unverifiedClient, "service_requests/request-4"), payload),
+    );
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), "users/client-incomplete"), {
+        role: "client",
+        name: "",
+        profileComplete: true,
+      });
+    });
+    const incompleteClient = testEnv.authenticatedContext(
+      "client-incomplete",
+      {email_verified: true},
+    ).firestore();
+    await assertFails(
+      setDoc(
+        doc(incompleteClient, "service_requests/request-5"),
+        {...payload, clientId: "client-incomplete"},
+      ),
     );
   });
 

@@ -2,7 +2,7 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 
 class AnalyticsService {
   AnalyticsService({FirebaseAnalytics? analytics})
-      : _analytics = analytics ?? FirebaseAnalytics.instance;
+    : _analytics = analytics ?? FirebaseAnalytics.instance;
 
   final FirebaseAnalytics _analytics;
 
@@ -21,4 +21,6 @@ class AnalyticsService {
 
   Future<void> logServiceCompleted(String requestId) =>
       logEvent('service_completed', parameters: {'request_id': requestId});
+
+  Future<void> logVerificationEvent(String name) => logEvent(name);
 }

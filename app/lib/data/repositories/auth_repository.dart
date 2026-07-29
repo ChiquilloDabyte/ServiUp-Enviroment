@@ -84,6 +84,16 @@ class AuthRepository {
     } catch (error, stackTrace) {
       AppLogger.warning('Sign-up analytics failed', error, stackTrace);
     }
+    try {
+      await _authService.sendEmailVerification();
+      await _analyticsService.logVerificationEvent('email_verification_sent');
+    } catch (error, stackTrace) {
+      AppLogger.warning(
+        'Initial email verification could not be sent',
+        error,
+        stackTrace,
+      );
+    }
     await syncFcmToken();
 
     return model;
@@ -133,6 +143,97 @@ class AuthRepository {
   Future<void> sendPasswordResetEmail(String email) =>
       _authService.sendPasswordResetEmail(email);
 
+  Future<void> sendEmailVerification() async {
+    await _authService.sendEmailVerification();
+    await _logVerificationEvent('email_verification_sent');
+  }
+
+  Future<User?> reloadCurrentUser() async {
+    final user = await _authService.reloadCurrentUser();
+    if (user?.emailVerified ?? false) {
+      await _authService.refreshIdToken();
+      await _logVerificationEvent('email_verification_completed');
+    }
+    return user;
+  }
+
+  Future<void> startPhoneVerification({
+    required String phoneNumber,
+    required FutureOr<void> Function() onVerificationCompleted,
+    required void Function(String verificationId, int? resendToken) onCodeSent,
+    required void Function(AuthException error) onVerificationFailed,
+    required void Function(String verificationId) onAutoRetrievalTimeout,
+    int? forceResendingToken,
+  }) async {
+    await _logVerificationEvent('phone_verification_started');
+    await _authService.startPhoneVerification(
+      phoneNumber: phoneNumber,
+      forceResendingToken: forceResendingToken,
+      onVerificationCompleted: () async {
+        try {
+          await syncVerifiedPhone();
+          await _logVerificationEvent('phone_verification_completed');
+          await onVerificationCompleted();
+        } catch (error, stackTrace) {
+          AppLogger.warning(
+            'Automatic phone verification could not be synchronized',
+            error,
+            stackTrace,
+          );
+          onVerificationFailed(
+            error is AuthException
+                ? error
+                : const AuthException(
+                  'El teléfono se verificó, pero falta sincronizarlo.',
+                  code: 'phone-sync-failed',
+                ),
+          );
+        }
+      },
+      onCodeSent: onCodeSent,
+      onVerificationFailed: (error) {
+        unawaited(_logVerificationEvent('phone_verification_failed'));
+        onVerificationFailed(error);
+      },
+      onAutoRetrievalTimeout: onAutoRetrievalTimeout,
+    );
+  }
+
+  Future<void> confirmPhoneVerification({
+    required String verificationId,
+    required String smsCode,
+  }) async {
+    try {
+      await _authService.confirmPhoneCode(
+        verificationId: verificationId,
+        smsCode: smsCode,
+      );
+      await syncVerifiedPhone();
+      await _logVerificationEvent('phone_verification_completed');
+    } catch (_) {
+      await _logVerificationEvent('phone_verification_failed');
+      rethrow;
+    }
+  }
+
+  Future<void> syncVerifiedPhone() async {
+    await _authService.reloadCurrentUser();
+    await _authService.refreshIdToken();
+    final user = currentUser;
+    final phoneNumber = user?.phoneNumber;
+    if (user == null || phoneNumber == null || phoneNumber.isEmpty) {
+      throw const AuthException(
+        'No hay un teléfono verificado para sincronizar.',
+        code: 'phone-not-verified',
+      );
+    }
+    await _firestoreService.users.doc(user.uid).update({
+      'phone': phoneNumber,
+      'phoneVerifiedAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
   Future<void> syncFcmToken([String? refreshedToken]) async {
     final uid = currentUser?.uid;
     final token = refreshedToken ?? await _notificationService.getToken();
@@ -155,5 +256,13 @@ class AuthRepository {
       throw const AuthException('Debes iniciar sesión.');
     }
     return _storageService.uploadUserAvatar(userId: uid, file: file);
+  }
+
+  Future<void> _logVerificationEvent(String name) async {
+    try {
+      await _analyticsService.logVerificationEvent(name);
+    } catch (error, stackTrace) {
+      AppLogger.warning('Verification analytics failed', error, stackTrace);
+    }
   }
 }

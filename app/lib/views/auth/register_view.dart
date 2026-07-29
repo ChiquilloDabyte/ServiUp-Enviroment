@@ -51,6 +51,7 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
             password: _passwordController.text,
             role: _role,
           );
+      if (mounted) context.go('/onboarding');
     } catch (e) {
       if (!mounted) return;
       setState(() => _error = authErrorMessage(e));

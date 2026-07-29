@@ -149,6 +149,41 @@ export const createProposal = onCall(
     const proposalProviderId = providerId;
 
     const actor = await requireUser(actorId);
+    if (actorId === proposalProviderId) {
+      if (
+        actor.role !== "provider" ||
+        actor.profileComplete !== true ||
+        typeof actor.name !== "string" ||
+        actor.name.trim().length === 0 ||
+        !Array.isArray(actor.serviceCategories) ||
+        actor.serviceCategories.length === 0
+      ) {
+        throw new HttpsError(
+          "failed-precondition",
+          "Completa tu perfil antes de enviar propuestas.",
+          {requirement: "profile"},
+        );
+      }
+      if (request.auth?.token.email_verified !== true) {
+        throw new HttpsError(
+          "failed-precondition",
+          "Verifica tu correo antes de enviar propuestas.",
+          {requirement: "email"},
+        );
+      }
+      const tokenPhone = request.auth?.token.phone_number;
+      if (
+        typeof tokenPhone !== "string" ||
+        actor.phone !== tokenPhone ||
+        actor.phoneVerifiedAt == null
+      ) {
+        throw new HttpsError(
+          "failed-precondition",
+          "Verifica tu celular antes de enviar propuestas.",
+          {requirement: "phone"},
+        );
+      }
+    }
     const offerRef = db.collection("offers").doc();
     const requestRef = db
       .collection("service_requests")

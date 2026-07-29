@@ -25,7 +25,6 @@ class OnboardingView extends ConsumerStatefulWidget {
 class _OnboardingViewState extends ConsumerState<OnboardingView> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _phoneController = TextEditingController();
   final _selectedCategories = <String>{};
   File? _avatarFile;
   String? _error;
@@ -34,7 +33,6 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
   @override
   void dispose() {
     _nameController.dispose();
-    _phoneController.dispose();
     super.dispose();
   }
 
@@ -62,7 +60,6 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
           .saveProfile(
             user: user,
             name: _nameController.text,
-            phone: _phoneController.text,
             categories: _selectedCategories.toList(),
             latitude: location.latitude,
             longitude: location.longitude,
@@ -241,20 +238,6 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
                                           ? 'Ingresa tu nombre'
                                           : null,
                             ),
-                            const SizedBox(height: AppSpacing.gutter),
-                            TextFormField(
-                              controller: _phoneController,
-                              decoration: const InputDecoration(
-                                labelText: 'Teléfono',
-                                prefixIcon: Icon(Icons.phone_outlined),
-                              ),
-                              keyboardType: TextInputType.phone,
-                              validator:
-                                  (value) =>
-                                      value == null || value.isEmpty
-                                          ? 'Ingresa tu teléfono'
-                                          : null,
-                            ),
                           ],
                         ),
                       ),
@@ -264,6 +247,12 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              Text(
+                                'El celular se verificará mediante SMS cuando '
+                                'quieras enviar tu primera propuesta.',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                              const SizedBox(height: AppSpacing.md),
                               Text(
                                 'Categorías de servicio',
                                 style: Theme.of(context).textTheme.titleMedium,
@@ -316,6 +305,20 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
                         onPressed: isLoading ? null : _submit,
                         icon: const Icon(Icons.arrow_forward_rounded),
                         label: Text(isLoading ? 'Guardando...' : 'Continuar'),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      TextButton(
+                        onPressed:
+                            isLoading
+                                ? null
+                                : () {
+                                  if (context.canPop()) {
+                                    context.pop();
+                                  } else {
+                                    context.go('/home');
+                                  }
+                                },
+                        child: const Text('Explorar por ahora'),
                       ),
                     ],
                   ),

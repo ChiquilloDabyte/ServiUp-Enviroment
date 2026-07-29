@@ -10,8 +10,8 @@ import '../../domain/viewmodels/auth_viewmodel.dart';
 import '../../domain/viewmodels/service_request_viewmodel.dart';
 import '../../models/service_request_model.dart';
 import '../../widgets/empty_state.dart';
+import '../../widgets/account_requirements_card.dart';
 import '../../widgets/loading_view.dart';
-import '../../widgets/offline_banner.dart';
 import '../../widgets/request_card.dart';
 import '../../widgets/responsive_content.dart';
 
@@ -71,7 +71,7 @@ class _ProviderHomeViewState extends ConsumerState<ProviderHomeView> {
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProfileProvider).value;
-    final hasConnection = ref.watch(hasConnectionProvider).value ?? true;
+    final verification = ref.watch(accountVerificationProvider);
 
     final AsyncValue<List<ServiceRequestModel>> nearby =
         _lat != null && _lng != null
@@ -106,10 +106,15 @@ class _ProviderHomeViewState extends ConsumerState<ProviderHomeView> {
         ),
         body: Column(
           children: [
-            if (!hasConnection)
-              OfflineBanner(
-                message: 'Sin conexión. Consulta el directorio offline.',
-                onViewDirectory: () => context.push('/offline'),
+            if (verification.accountRequirements.isNotEmpty)
+              const ResponsiveContent(
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.mobileMargin,
+                  AppSpacing.gutter,
+                  AppSpacing.mobileMargin,
+                  0,
+                ),
+                child: AccountRequirementsCard(),
               ),
             Expanded(
               child: TabBarView(

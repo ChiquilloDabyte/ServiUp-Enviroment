@@ -42,7 +42,25 @@ class ProviderCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(provider.name, style: textTheme.titleMedium),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            provider.name,
+                            style: textTheme.titleMedium,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.xxs),
+                        Semantics(
+                          label: 'Teléfono verificado',
+                          child: Icon(
+                            Icons.verified_outlined,
+                            size: 18,
+                            color: colors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: AppSpacing.xs),
                     if (provider.serviceCategories.isEmpty)
                       Text(

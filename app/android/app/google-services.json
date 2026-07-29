@@ -58,6 +58,22 @@
           }
         },
         {
+          "client_id": "741301175647-ct1q8mfgp60ir9igssjo4ghtej6ri6os.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.teamMaster.ServiUp",
+            "certificate_hash": "723e457333d2c3273a177b0069d9556b90a47409"
+          }
+        },
+        {
+          "client_id": "741301175647-u4pcitmt57q678l9p5glct060fc88j8f.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.teamMaster.ServiUp",
+            "certificate_hash": "ff36a8ae0d50fe28d3d23c8ae5c437320b3c36bc"
+          }
+        },
+        {
           "client_id": "741301175647-vp5lju3gdntgnaec9qsgps18jl37fq4n.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

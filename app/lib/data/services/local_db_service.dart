@@ -12,10 +12,7 @@ class LocalDbService {
   Future<Isar> get database async {
     if (_isar != null) return _isar!;
     final dir = await getApplicationDocumentsDirectory();
-    _isar = await Isar.open(
-      [LocalProviderSchema],
-      directory: dir.path,
-    );
+    _isar = await Isar.open([LocalProviderSchema], directory: dir.path);
     AppLogger.info('Isar database opened');
     return _isar!;
   }

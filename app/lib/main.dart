@@ -8,9 +8,5 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await FirebaseBootstrap.initialize();
 
-  runApp(
-    const ProviderScope(
-      child: ServiUpApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: ServiUpApp()));
 }

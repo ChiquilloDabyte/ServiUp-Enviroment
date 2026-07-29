@@ -11,6 +11,8 @@ import '../../domain/providers/app_providers.dart';
 import '../../domain/viewmodels/places_search_viewmodel.dart';
 import '../../domain/viewmodels/service_request_viewmodel.dart';
 import '../../widgets/error_banner.dart';
+import '../../widgets/account_requirements_card.dart';
+import '../../models/enums/verification_action.dart';
 import '../../widgets/request_form_sections.dart';
 import '../../widgets/responsive_content.dart';
 
@@ -226,67 +228,70 @@ class _CreateRequestViewState extends ConsumerState<CreateRequestView> {
       body: SingleChildScrollView(
         child: ResponsiveContent(
           maxWidth: 800,
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  'Cuéntanos qué necesitas',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  'Agrega los detalles para recibir propuestas más precisas.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+          child: AccountActionGate(
+            action: VerificationAction.publishRequest,
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'Cuéntanos qué necesitas',
+                    style: Theme.of(context).textTheme.headlineMedium,
                   ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                if (_error != null) ...[
-                  ErrorBanner(message: _error!),
-                  const SizedBox(height: AppSpacing.gutter),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    'Agrega los detalles para recibir propuestas más precisas.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  if (_error != null) ...[
+                    ErrorBanner(message: _error!),
+                    const SizedBox(height: AppSpacing.gutter),
+                  ],
+                  ServiceDetailsFormSection(
+                    category: _category,
+                    onCategoryChanged:
+                        (value) => setState(() => _category = value),
+                    descriptionController: _descriptionController,
+                    scheduledAt: _scheduledAt,
+                    onPickDateTime: _pickDateTime,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  RequestLocationFormSection(
+                    addressController: _addressController,
+                    addressFocusNode: _addressFocusNode,
+                    suggestions: placesState.suggestions,
+                    isBusy: placesState.isSearching || placesState.isSelecting,
+                    coordinatesConfirmed: _addressCoordinatesConfirmed,
+                    latitude: _latitude,
+                    longitude: _longitude,
+                    onAddressChanged: _onAddressChanged,
+                    onAddressSubmitted: () {
+                      ref
+                          .read(placesSearchViewModelProvider.notifier)
+                          .dismissSuggestions();
+                    },
+                    onSuggestionSelected: (suggestion) {
+                      unawaited(_selectAddress(suggestion));
+                    },
+                    onLocationChanged: (lat, lng) {
+                      unawaited(_updateLocation(lat, lng));
+                    },
+                    error: placesState.error,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  FilledButton.icon(
+                    onPressed: isLoading ? null : _submit,
+                    icon: const Icon(Icons.publish_outlined),
+                    label: Text(
+                      isLoading ? 'Publicando...' : 'Publicar solicitud',
+                    ),
+                  ),
                 ],
-                ServiceDetailsFormSection(
-                  category: _category,
-                  onCategoryChanged:
-                      (value) => setState(() => _category = value),
-                  descriptionController: _descriptionController,
-                  scheduledAt: _scheduledAt,
-                  onPickDateTime: _pickDateTime,
-                ),
-                const SizedBox(height: AppSpacing.md),
-                RequestLocationFormSection(
-                  addressController: _addressController,
-                  addressFocusNode: _addressFocusNode,
-                  suggestions: placesState.suggestions,
-                  isBusy: placesState.isSearching || placesState.isSelecting,
-                  coordinatesConfirmed: _addressCoordinatesConfirmed,
-                  latitude: _latitude,
-                  longitude: _longitude,
-                  onAddressChanged: _onAddressChanged,
-                  onAddressSubmitted: () {
-                    ref
-                        .read(placesSearchViewModelProvider.notifier)
-                        .dismissSuggestions();
-                  },
-                  onSuggestionSelected: (suggestion) {
-                    unawaited(_selectAddress(suggestion));
-                  },
-                  onLocationChanged: (lat, lng) {
-                    unawaited(_updateLocation(lat, lng));
-                  },
-                  error: placesState.error,
-                ),
-                const SizedBox(height: AppSpacing.md),
-                FilledButton.icon(
-                  onPressed: isLoading ? null : _submit,
-                  icon: const Icon(Icons.publish_outlined),
-                  label: Text(
-                    isLoading ? 'Publicando...' : 'Publicar solicitud',
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),

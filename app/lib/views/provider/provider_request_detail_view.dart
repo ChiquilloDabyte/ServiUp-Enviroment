@@ -8,6 +8,8 @@ import '../../domain/providers/app_providers.dart';
 import '../../domain/viewmodels/offer_viewmodel.dart';
 import '../../domain/viewmodels/service_request_viewmodel.dart';
 import '../../models/enums/request_status.dart';
+import '../../models/enums/verification_action.dart';
+import '../../widgets/account_requirements_card.dart';
 import '../../widgets/error_banner.dart';
 import '../../widgets/loading_view.dart';
 import '../../widgets/request_map_preview.dart';
@@ -118,51 +120,56 @@ class _ProviderRequestDetailViewState
                 ),
                 if (item.status == RequestStatus.open) ...[
                   const SizedBox(height: AppSpacing.lg),
-                  SectionCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          'Envía tu propuesta',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        Text(
-                          'Indica un precio y agrega un mensaje para el cliente.',
-                          style: Theme.of(
-                            context,
-                          ).textTheme.bodySmall?.copyWith(
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
+                  AccountActionGate(
+                    action: VerificationAction.sendOffer,
+                    child: SectionCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            'Envía tu propuesta',
+                            style: Theme.of(context).textTheme.titleLarge,
                           ),
-                        ),
-                        const SizedBox(height: AppSpacing.gutter),
-                        TextField(
-                          controller: _priceController,
-                          decoration: const InputDecoration(
-                            labelText: 'Precio propuesto',
-                            prefixIcon: Icon(Icons.payments_outlined),
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            'Indica un precio y agrega un mensaje para el cliente.',
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodySmall?.copyWith(
+                              color:
+                                  Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                            ),
                           ),
-                          keyboardType: TextInputType.number,
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        TextField(
-                          controller: _messageController,
-                          decoration: const InputDecoration(
-                            labelText: 'Mensaje',
-                            prefixIcon: Icon(Icons.message_outlined),
+                          const SizedBox(height: AppSpacing.gutter),
+                          TextField(
+                            controller: _priceController,
+                            decoration: const InputDecoration(
+                              labelText: 'Precio propuesto',
+                              prefixIcon: Icon(Icons.payments_outlined),
+                            ),
+                            keyboardType: TextInputType.number,
                           ),
-                          maxLines: 3,
-                        ),
-                        const SizedBox(height: AppSpacing.gutter),
-                        FilledButton.icon(
-                          onPressed: isLoading ? null : _sendOffer,
-                          icon: const Icon(Icons.send_outlined),
-                          label: Text(
-                            isLoading ? 'Enviando...' : 'Enviar oferta',
+                          const SizedBox(height: AppSpacing.sm),
+                          TextField(
+                            controller: _messageController,
+                            decoration: const InputDecoration(
+                              labelText: 'Mensaje',
+                              prefixIcon: Icon(Icons.message_outlined),
+                            ),
+                            maxLines: 3,
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: AppSpacing.gutter),
+                          FilledButton.icon(
+                            onPressed: isLoading ? null : _sendOffer,
+                            icon: const Icon(Icons.send_outlined),
+                            label: Text(
+                              isLoading ? 'Enviando...' : 'Enviar oferta',
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   providerOffers.when(

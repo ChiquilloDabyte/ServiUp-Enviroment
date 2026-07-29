@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:serviup/domain/providers/app_providers.dart';
+import 'package:serviup/models/account_verification_state.dart';
 import 'package:serviup/models/enums/user_role.dart';
 import 'package:serviup/models/user_model.dart';
 import 'package:serviup/views/profile/edit_profile_view.dart';
@@ -13,7 +14,7 @@ void main() {
     email: 'ana@example.com',
     role: UserRole.provider,
     name: 'Ana Torres',
-    phone: '3001234567',
+    phone: '+573001234567',
     serviceCategories: ['Plomería'],
     rating: 4.8,
     ratingCount: 12,
@@ -31,6 +32,14 @@ void main() {
         overrides: [
           currentUserProfileProvider.overrideWith(
             (ref) => Stream.value(provider),
+          ),
+          accountVerificationProvider.overrideWithValue(
+            const AccountVerificationState(
+              role: UserRole.provider,
+              profileComplete: true,
+              emailVerified: true,
+              phoneVerified: true,
+            ),
           ),
         ],
         child: const MaterialApp(home: ProfileView()),
@@ -61,7 +70,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.widgetWithText(TextFormField, 'Ana Torres'), findsOneWidget);
-    expect(find.widgetWithText(TextFormField, '3001234567'), findsOneWidget);
+    expect(find.widgetWithText(TextFormField, '+573001234567'), findsNothing);
     final category = tester.widget<FilterChip>(
       find.widgetWithText(FilterChip, 'Plomería'),
     );

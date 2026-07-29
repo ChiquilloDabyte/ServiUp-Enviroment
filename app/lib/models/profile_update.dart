@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class ProfileUpdate {
   const ProfileUpdate({
     required this.name,
-    required this.phone,
     required this.serviceCategories,
     this.photoUrl,
     this.latitude,
@@ -12,7 +11,6 @@ class ProfileUpdate {
   });
 
   final String name;
-  final String phone;
   final String? photoUrl;
   final double? latitude;
   final double? longitude;
@@ -25,7 +23,6 @@ class ProfileUpdate {
             : GeoPoint(latitude!, longitude!);
     return {
       'name': name.trim(),
-      'phone': phone.trim(),
       'photoUrl': photoUrl,
       'serviceCategories': serviceCategories,
       'profileComplete': true,

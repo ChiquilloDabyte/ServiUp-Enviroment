@@ -11,6 +11,9 @@ import '../../domain/viewmodels/offer_viewmodel.dart';
 import '../../models/chat_model.dart';
 import '../../models/enums/chat_status.dart';
 import '../../models/offer_model.dart';
+import '../../models/enums/user_role.dart';
+import '../../models/enums/verification_action.dart';
+import '../../widgets/account_requirements_card.dart';
 import '../../widgets/chat/chat_composer.dart';
 import '../../widgets/chat/chat_messages_list.dart';
 import '../../widgets/chat/chat_offer_panel.dart';
@@ -69,13 +72,23 @@ class _ChatViewState extends ConsumerState<ChatView> {
   }
 
   Future<void> _showProposalDialog(ChatModel chat, String userId) async {
+    final user = ref.read(currentUserProfileProvider).value;
+    if (user?.role == UserRole.provider) {
+      final verification = ref.read(accountVerificationProvider);
+      if (!verification.isReadyFor(VerificationAction.sendOffer)) {
+        await showAccountRequirementsSheet(
+          context,
+          VerificationAction.sendOffer,
+        );
+        return;
+      }
+    }
     final result = await showDialog<ProposalResult>(
       context: context,
       builder: (context) => const ProposalDialog(),
     );
     if (result == null) return;
 
-    final user = ref.read(currentUserProfileProvider).value;
     try {
       await ref
           .read(offerViewModelProvider.notifier)
