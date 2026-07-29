@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-
 import '../../domain/providers/app_providers.dart';
 import '../../domain/viewmodels/auth_viewmodel.dart';
 import '../../models/enums/user_role.dart';
@@ -24,15 +22,6 @@ class HomeView extends ConsumerWidget {
       data: (user) {
         if (user == null) {
           return const Scaffold(body: Center(child: Text('Sin sesión')));
-        }
-
-        if (!user.profileComplete) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (context.mounted) context.go('/onboarding');
-          });
-          return const Scaffold(
-            body: LoadingView(message: 'Completando perfil...'),
-          );
         }
 
         return user.role == UserRole.client

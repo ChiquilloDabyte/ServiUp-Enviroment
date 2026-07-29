@@ -16,6 +16,7 @@ class UserModel {
     this.rating = 0,
     this.ratingCount = 0,
     this.profileComplete = false,
+    this.phoneVerifiedAt,
     this.fcmToken,
     this.createdAt,
   });
@@ -32,6 +33,7 @@ class UserModel {
   final double rating;
   final int ratingCount;
   final bool profileComplete;
+  final DateTime? phoneVerifiedAt;
   final String? fcmToken;
   final DateTime? createdAt;
 
@@ -59,6 +61,7 @@ class UserModel {
       rating: (data['rating'] as num?)?.toDouble() ?? 0,
       ratingCount: data['ratingCount'] as int? ?? 0,
       profileComplete: data['profileComplete'] as bool? ?? false,
+      phoneVerifiedAt: (data['phoneVerifiedAt'] as Timestamp?)?.toDate(),
       fcmToken: data['fcmToken'] as String?,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
     );
@@ -76,6 +79,8 @@ class UserModel {
       'rating': rating,
       'ratingCount': ratingCount,
       'profileComplete': profileComplete,
+      if (phoneVerifiedAt != null)
+        'phoneVerifiedAt': Timestamp.fromDate(phoneVerifiedAt!),
       'fcmToken': fcmToken,
       'createdAt':
           createdAt != null
@@ -94,6 +99,7 @@ class UserModel {
     double? rating,
     int? ratingCount,
     bool? profileComplete,
+    DateTime? phoneVerifiedAt,
     String? fcmToken,
   }) {
     return UserModel(
@@ -109,6 +115,7 @@ class UserModel {
       rating: rating ?? this.rating,
       ratingCount: ratingCount ?? this.ratingCount,
       profileComplete: profileComplete ?? this.profileComplete,
+      phoneVerifiedAt: phoneVerifiedAt ?? this.phoneVerifiedAt,
       fcmToken: fcmToken ?? this.fcmToken,
       createdAt: createdAt,
     );

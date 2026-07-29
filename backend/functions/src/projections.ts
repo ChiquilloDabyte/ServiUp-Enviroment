@@ -29,6 +29,7 @@ export const onUserWritten = onDocumentWritten(
       !user ||
       user.role !== "provider" ||
       user.profileComplete !== true ||
+      user.phoneVerifiedAt == null ||
       typeof user.phone !== "string" ||
       user.phone.trim().length === 0
     ) {

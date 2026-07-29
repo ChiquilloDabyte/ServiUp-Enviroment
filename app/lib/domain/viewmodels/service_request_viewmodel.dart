@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/errors/app_exception.dart';
 import '../../models/service_request_model.dart';
+import '../../models/enums/verification_action.dart';
 import '../providers/app_providers.dart';
 
 class ServiceRequestViewModel extends Notifier<AsyncValue<void>> {
@@ -17,6 +18,13 @@ class ServiceRequestViewModel extends Notifier<AsyncValue<void>> {
     required String address,
     required DateTime scheduledAt,
   }) async {
+    final verification = ref.read(accountVerificationProvider);
+    if (!verification.isReadyFor(VerificationAction.publishRequest)) {
+      throw const RepositoryException(
+        'Completa tu perfil y verifica el correo antes de publicar.',
+        code: 'account-verification-required',
+      );
+    }
     state = const AsyncLoading();
     late String requestId;
 

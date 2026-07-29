@@ -26,7 +26,7 @@ class ClientRequestDetailView extends ConsumerWidget {
 
   Future<void> _returnToProgress(BuildContext context, WidgetRef ref) async {
     final controller = TextEditingController();
-    
+
     final reason = await showDialog<String>(
       context: context,
       builder: (dialogContext) {
@@ -46,10 +46,12 @@ class ClientRequestDetailView extends ConsumerWidget {
                   helperText: 'Describe qué falta por completar.',
                   errorText: errorMessage,
                   errorStyle: const TextStyle(
-                    fontSize: 11, // Reduce un poco el tamaño para que quepa mejor
-                    height: 1.2,  // Ajusta la altura de la línea
+                    fontSize:
+                        11, // Reduce un poco el tamaño para que quepa mejor
+                    height: 1.2, // Ajusta la altura de la línea
                   ),
-                  errorMaxLines: 2, // Permite que el texto del error salte a dos líneas si es necesario
+                  errorMaxLines:
+                      2, // Permite que el texto del error salte a dos líneas si es necesario
                 ),
               ),
               actions: [
@@ -85,7 +87,7 @@ class ClientRequestDetailView extends ConsumerWidget {
     });
 
     if (reason == null || !context.mounted) return;
-    
+
     try {
       await ref
           .read(offerViewModelProvider.notifier)
@@ -251,22 +253,33 @@ class ClientRequestDetailView extends ConsumerWidget {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Row(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Expanded(
                                             child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
                                                 Text(
-                                                  formatCurrency(offer.proposedPrice),
-                                                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                                    fontWeight: FontWeight.bold,
+                                                  formatCurrency(
+                                                    offer.proposedPrice,
                                                   ),
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .headlineSmall
+                                                      ?.copyWith(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
                                                 ),
                                                 const SizedBox(height: 4),
                                                 Text(
                                                   offer.message,
-                                                  style: Theme.of(context).textTheme.bodyMedium,
+                                                  style:
+                                                      Theme.of(
+                                                        context,
+                                                      ).textTheme.bodyMedium,
                                                 ),
                                               ],
                                             ),
@@ -278,31 +291,44 @@ class ClientRequestDetailView extends ConsumerWidget {
                                       const SizedBox(height: 20),
                                       Column(
                                         children: [
-
                                           Row(
                                             children: [
-
                                               Expanded(
                                                 child: OutlinedButton.icon(
-                                                  onPressed: user == null
-                                                      ? null
-                                                      : () async {
-                                                          final chatId =
-                                                              offer.chatId.isEmpty
-                                                                  ? await ref
-                                                                      .read(chatViewModelProvider.notifier)
-                                                                      .ensureChat(
-                                                                        requestId: item.id,
-                                                                        clientId: item.clientId,
-                                                                        providerId: offer.providerId,
-                                                                      )
-                                                                  : offer.chatId;
+                                                  onPressed:
+                                                      user == null
+                                                          ? null
+                                                          : () async {
+                                                            final chatId =
+                                                                offer
+                                                                        .chatId
+                                                                        .isEmpty
+                                                                    ? await ref
+                                                                        .read(
+                                                                          chatViewModelProvider
+                                                                              .notifier,
+                                                                        )
+                                                                        .ensureChat(
+                                                                          requestId:
+                                                                              item.id,
+                                                                          clientId:
+                                                                              item.clientId,
+                                                                          providerId:
+                                                                              offer.providerId,
+                                                                        )
+                                                                    : offer
+                                                                        .chatId;
 
-                                                          if (context.mounted) {
-                                                            context.push('/chats/$chatId');
-                                                          }
-                                                        },
-                                                  icon: const Icon(Icons.chat_bubble_outline),
+                                                            if (context
+                                                                .mounted) {
+                                                              context.push(
+                                                                '/chats/$chatId',
+                                                              );
+                                                            }
+                                                          },
+                                                  icon: const Icon(
+                                                    Icons.chat_bubble_outline,
+                                                  ),
                                                   label: const Text("Chatear"),
                                                 ),
                                               ),
@@ -312,14 +338,22 @@ class ClientRequestDetailView extends ConsumerWidget {
 
                                                 Expanded(
                                                   child: FilledButton.icon(
-                                                    onPressed: () => ref
-                                                        .read(offerViewModelProvider.notifier)
-                                                        .acceptOffer(
-                                                          offer: offer,
-                                                          actorId: user.id,
-                                                        ),
-                                                    icon: const Icon(Icons.check),
-                                                    label: const Text("Aceptar"),
+                                                    onPressed:
+                                                        () => ref
+                                                            .read(
+                                                              offerViewModelProvider
+                                                                  .notifier,
+                                                            )
+                                                            .acceptOffer(
+                                                              offer: offer,
+                                                              actorId: user.id,
+                                                            ),
+                                                    icon: const Icon(
+                                                      Icons.check,
+                                                    ),
+                                                    label: const Text(
+                                                      "Aceptar",
+                                                    ),
                                                   ),
                                                 ),
                                               ],
@@ -330,12 +364,16 @@ class ClientRequestDetailView extends ConsumerWidget {
                                             const SizedBox(height: 12),
 
                                             OutlinedButton.icon(
-                                              onPressed: () => ref
-                                                  .read(offerViewModelProvider.notifier)
-                                                  .rejectOffer(
-                                                    offer: offer,
-                                                    actorId: user.id,
-                                                  ),
+                                              onPressed:
+                                                  () => ref
+                                                      .read(
+                                                        offerViewModelProvider
+                                                            .notifier,
+                                                      )
+                                                      .rejectOffer(
+                                                        offer: offer,
+                                                        actorId: user.id,
+                                                      ),
                                               icon: const Icon(
                                                 Icons.close,
                                                 color: Colors.red,
@@ -347,8 +385,13 @@ class ClientRequestDetailView extends ConsumerWidget {
                                                 ),
                                               ),
                                               style: OutlinedButton.styleFrom(
-                                                minimumSize: const Size(double.infinity, 50),
-                                                side: const BorderSide(color: Colors.red),
+                                                minimumSize: const Size(
+                                                  double.infinity,
+                                                  50,
+                                                ),
+                                                side: const BorderSide(
+                                                  color: Colors.red,
+                                                ),
                                               ),
                                             ),
                                           ],

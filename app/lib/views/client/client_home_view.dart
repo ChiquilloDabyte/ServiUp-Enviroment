@@ -12,6 +12,7 @@ import '../../domain/viewmodels/service_request_viewmodel.dart';
 import '../../models/provider_public_profile_model.dart';
 import '../../models/service_request_model.dart';
 import '../../widgets/empty_state.dart';
+import '../../widgets/account_requirements_card.dart';
 import '../../widgets/loading_view.dart';
 import '../../widgets/offline_banner.dart';
 import '../../widgets/provider_card.dart';
@@ -57,6 +58,7 @@ class _ClientHomeViewState extends ConsumerState<ClientHomeView> {
       providersListProvider((category: null, query: _searchQuery)),
     );
     final hasConnection = ref.watch(hasConnectionProvider).value ?? true;
+    final verification = ref.watch(accountVerificationProvider);
 
     return DefaultTabController(
       length: 2,
@@ -88,6 +90,16 @@ class _ClientHomeViewState extends ConsumerState<ClientHomeView> {
               OfflineBanner(
                 message: 'Sin conexión. Puedes ver prestadores offline.',
                 onViewDirectory: () => context.push('/offline'),
+              ),
+            if (verification.accountRequirements.isNotEmpty)
+              const ResponsiveContent(
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.mobileMargin,
+                  AppSpacing.gutter,
+                  AppSpacing.mobileMargin,
+                  0,
+                ),
+                child: AccountRequirementsCard(),
               ),
             Expanded(
               child: TabBarView(

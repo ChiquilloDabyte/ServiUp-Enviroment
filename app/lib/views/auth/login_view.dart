@@ -37,6 +37,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
       await ref
           .read(authViewModelProvider.notifier)
           .signIn(_emailController.text, _passwordController.text);
+      if (mounted) context.go('/home');
     } catch (e) {
       if (!mounted) return;
       setState(() => _error = authErrorMessage(e));

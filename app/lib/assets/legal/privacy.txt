@@ -1,13 +1,15 @@
 AVISO DE PRIVACIDAD DE SERVIUP
-Última actualización: 27 de julio de 2026
+Última actualización: 28 de julio de 2026
 
 1. INFORMACIÓN QUE TRATAMOS
 
-Tratamos los datos necesarios para operar ServiUp: correo electrónico, rol, nombre, teléfono, foto opcional, categorías de servicio y datos técnicos de autenticación.
+Tratamos los datos necesarios para operar ServiUp: correo electrónico, rol, nombre, foto opcional, categorías de servicio y datos técnicos de autenticación. El teléfono se solicita únicamente a prestadores que desean enviar propuestas y aparecer en el directorio.
 
 Cuando usas funciones de ubicación podemos tratar coordenadas, dirección seleccionada y fecha del servicio. También almacenamos solicitudes, propuestas, mensajes, imágenes de chat, estados del servicio, notificaciones y, cuando se habiliten, calificaciones.
 
-Firebase Analytics puede recopilar eventos de uso y Firebase Crashlytics información técnica sobre fallos. No almacenamos contraseñas en Firestore ni en la base local.
+Firebase envía un código SMS para comprobar que el prestador controla el número indicado. Google puede recibir y almacenar ese número para prestar la autenticación y prevenir spam o abuso en sus servicios.
+
+Firebase Analytics puede recopilar eventos de uso y Firebase Crashlytics información técnica sobre fallos. Los eventos de verificación no contienen el correo, teléfono ni código SMS. No almacenamos contraseñas en Firestore ni en la base local.
 
 2. FINALIDADES
 
@@ -25,7 +27,7 @@ ServiUp no procesa pagos ni ofrece actualmente autenticación mediante redes soc
 
 3. VISIBILIDAD DE LOS DATOS
 
-El documento privado de cada usuario solo puede ser consultado por su propietario y el backend. Para prestadores con perfil completo se crea una ficha visible a usuarios autenticados con nombre, teléfono, foto, categorías y calificación agregada.
+El documento privado de cada usuario solo puede ser consultado por su propietario y el backend. Para prestadores con perfil completo y teléfono verificado se crea una ficha visible a usuarios autenticados con nombre, teléfono, foto, categorías y calificación agregada. Los clientes no necesitan proporcionar un teléfono.
 
 Las solicitudes abiertas muestran a los prestadores una ubicación aproximada. La dirección y coordenadas exactas solo quedan disponibles para el cliente y el prestador cuya propuesta fue aceptada.
 

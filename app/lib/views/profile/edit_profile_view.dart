@@ -25,7 +25,6 @@ class EditProfileView extends ConsumerStatefulWidget {
 class _EditProfileViewState extends ConsumerState<EditProfileView> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _phoneController = TextEditingController();
   final _picker = ImagePicker();
   final Set<String> _categories = {};
 
@@ -35,7 +34,6 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
   @override
   void dispose() {
     _nameController.dispose();
-    _phoneController.dispose();
     super.dispose();
   }
 
@@ -43,7 +41,6 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
     if (_loadedUserId == user.id) return;
     _loadedUserId = user.id;
     _nameController.text = user.name;
-    _phoneController.text = user.phone;
     _categories
       ..clear()
       ..addAll(user.serviceCategories);
@@ -83,7 +80,6 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
           .saveProfile(
             user: user,
             name: _nameController.text,
-            phone: _phoneController.text,
             categories:
                 user.role == UserRole.provider
                     ? _categories.toList()
@@ -172,21 +168,6 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
                               (value) =>
                                   value == null || value.trim().isEmpty
                                       ? 'Ingresa tu nombre.'
-                                      : null,
-                        ),
-                        const SizedBox(height: AppSpacing.gutter),
-                        TextFormField(
-                          controller: _phoneController,
-                          enabled: !saving,
-                          keyboardType: TextInputType.phone,
-                          decoration: const InputDecoration(
-                            labelText: 'Teléfono',
-                            prefixIcon: Icon(Icons.phone_outlined),
-                          ),
-                          validator:
-                              (value) =>
-                                  value == null || value.trim().isEmpty
-                                      ? 'Ingresa tu teléfono.'
                                       : null,
                         ),
                         if (user.role == UserRole.provider) ...[

@@ -63,8 +63,10 @@ class DefaultFirebaseOptions {
     messagingSenderId: '741301175647',
     projectId: 'serviup',
     storageBucket: 'serviup.firebasestorage.app',
-    androidClientId: '741301175647-4lv4rot9khu2e7t4q0kejqptbh2029r6.apps.googleusercontent.com',
-    iosClientId: '741301175647-q4huu9q8dq6oq73q623qkuopqm3jcnal.apps.googleusercontent.com',
+    androidClientId:
+        '741301175647-4lv4rot9khu2e7t4q0kejqptbh2029r6.apps.googleusercontent.com',
+    iosClientId:
+        '741301175647-q4huu9q8dq6oq73q623qkuopqm3jcnal.apps.googleusercontent.com',
     iosBundleId: 'com.example.flutterApplication1',
   );
   static const FirebaseOptions macos = FirebaseOptions(
@@ -73,8 +75,10 @@ class DefaultFirebaseOptions {
     messagingSenderId: '741301175647',
     projectId: 'serviup',
     storageBucket: 'serviup.firebasestorage.app',
-    androidClientId: '741301175647-4lv4rot9khu2e7t4q0kejqptbh2029r6.apps.googleusercontent.com',
-    iosClientId: '741301175647-q4huu9q8dq6oq73q623qkuopqm3jcnal.apps.googleusercontent.com',
+    androidClientId:
+        '741301175647-4lv4rot9khu2e7t4q0kejqptbh2029r6.apps.googleusercontent.com',
+    iosClientId:
+        '741301175647-q4huu9q8dq6oq73q623qkuopqm3jcnal.apps.googleusercontent.com',
     iosBundleId: 'com.example.flutterApplication1',
   );
 

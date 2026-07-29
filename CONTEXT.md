@@ -1,6 +1,6 @@
 # Contexto del proyecto ServiUp
 
-Última actualización: 2026-07-27
+Última actualización: 2026-07-28
 
 ## Propósito
 
@@ -27,6 +27,8 @@ Las normas obligatorias de arquitectura, calidad, seguridad y estilo están en
 ### Funcionalidades con implementación
 
 - Registro, inicio de sesión, recuperación de contraseña y cierre de sesión.
+- Verificación progresiva de correo para acciones de clientes y de correo más
+  celular para propuestas de prestadores.
 - Roles de cliente y prestador, con finalización de perfil mediante onboarding.
 - Creación y consulta de solicitudes de servicio.
 - Exploración de solicitudes por prestadores.
@@ -37,6 +39,7 @@ Las normas obligatorias de arquitectura, calidad, seguridad y estilo están en
 - Cambios de estado de una solicitud: abierta, aceptada, en progreso,
   completada y cancelada.
 - Directorio offline de prestadores almacenado con Isar.
+- Acceso al directorio offline disponible exclusivamente para clientes.
 - Sincronización del directorio local cuando existe conexión y sesión activa.
 - Textos legales de términos y privacidad.
 - Sistema visual Organic Utility aplicado a los flujos de identidad,
@@ -129,7 +132,8 @@ principales usan `#50752D`, mientras `#395C16` conserva el rol semántico
 
 ### Colecciones principales
 
-- `users`: identidad de dominio, rol, perfil, categorías, teléfono y token FCM.
+- `users`: identidad de dominio, rol, perfil, categorías, teléfono verificado
+  de prestadores, fecha de verificación y token FCM.
 - `service_requests`: solicitudes creadas por clientes y su ciclo de vida.
 - `offers`: propuestas y contrapropuestas económicas.
 - `chats`: conversación determinista por solicitud y prestador.
@@ -169,6 +173,8 @@ Los índices compuestos se mantienen en
 - `onChatMessageCreated`: notifica al destinatario de un nuevo mensaje.
 - `onServiceRequestUpdated`: cierra chats no aplicables y rechaza ofertas
   pendientes cuando cambia el estado de una solicitud.
+- `createProposal`: exige perfil, correo y teléfono verificados cuando el
+  actor es el prestador.
 
 Las funciones guardan primero una notificación en Firestore e intentan enviar
 la notificación push si el usuario tiene un token FCM.
@@ -179,7 +185,7 @@ El modo offline mantiene en Isar una copia limitada de prestadores que:
 
 - tienen rol de prestador;
 - completaron su perfil;
-- tienen un número telefónico no vacío.
+- tienen un número telefónico verificado.
 
 La sincronización reemplaza el directorio local completo con los datos más
 recientes de Firestore. Solo se ejecuta si hay una sesión autenticada y el
@@ -208,8 +214,9 @@ Las rutas `/home`, `/chats` y `/profile` comparten una barra de navegación
 inferior. Los detalles de chat, la edición del perfil y los demás flujos
 secundarios se presentan fuera de esa barra.
 
-Una sesión ausente redirige a login. Una sesión válida con perfil incompleto
-redirige a onboarding.
+Una sesión ausente redirige a login. Un perfil inexistente redirige a
+onboarding; un perfil incompleto puede explorar, pero las acciones de
+publicación y oferta aplican requisitos progresivos.
 
 ## Configuración del entorno
 

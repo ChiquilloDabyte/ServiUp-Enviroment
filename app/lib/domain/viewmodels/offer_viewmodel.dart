@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/errors/app_exception.dart';
 import '../../models/offer_model.dart';
+import '../../models/enums/verification_action.dart';
 import '../providers/app_providers.dart';
 
 class OfferViewModel extends Notifier<AsyncValue<void>> {
@@ -14,6 +15,13 @@ class OfferViewModel extends Notifier<AsyncValue<void>> {
     required double proposedPrice,
     required String message,
   }) async {
+    final verification = ref.read(accountVerificationProvider);
+    if (!verification.isReadyFor(VerificationAction.sendOffer)) {
+      throw const RepositoryException(
+        'Completa tu perfil y verifica correo y celular antes de ofertar.',
+        code: 'account-verification-required',
+      );
+    }
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       await ref
@@ -61,6 +69,15 @@ class OfferViewModel extends Notifier<AsyncValue<void>> {
     required double proposedPrice,
     required String conditions,
   }) async {
+    if (actorRole == 'provider') {
+      final verification = ref.read(accountVerificationProvider);
+      if (!verification.isReadyFor(VerificationAction.sendOffer)) {
+        throw const RepositoryException(
+          'Completa tu perfil y verifica correo y celular antes de ofertar.',
+          code: 'account-verification-required',
+        );
+      }
+    }
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       await ref

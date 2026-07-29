@@ -46,9 +46,10 @@ class AppNotificationModel {
       'body': body,
       'read': read,
       'payload': payload,
-      'createdAt': createdAt != null
-          ? Timestamp.fromDate(createdAt!)
-          : FieldValue.serverTimestamp(),
+      'createdAt':
+          createdAt != null
+              ? Timestamp.fromDate(createdAt!)
+              : FieldValue.serverTimestamp(),
     };
   }
 }

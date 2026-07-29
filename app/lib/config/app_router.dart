@@ -3,8 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../domain/providers/app_providers.dart';
+import '../models/enums/user_role.dart';
 import '../views/auth/forgot_password_view.dart';
+import '../views/auth/email_verification_view.dart';
 import '../views/auth/login_view.dart';
+import '../views/auth/phone_verification_view.dart';
 import '../views/auth/register_view.dart';
 import '../views/client/create_request_view.dart';
 import '../views/client/request_detail_view.dart';
@@ -33,6 +36,7 @@ String? resolveAppRedirect({
   required String matchedLocation,
   required AuthRouteState authState,
   required ProfileRouteState profileState,
+  UserRole? userRole,
 }) {
   if (matchedLocation == '/splash') return null;
 
@@ -49,14 +53,13 @@ String? resolveAppRedirect({
   }
 
   if (profileState == ProfileRouteState.loading) return null;
-  if (profileState == ProfileRouteState.error) {
-    return loggingIn ? '/home' : null;
-  }
-  if (profileState == ProfileRouteState.missing ||
-      profileState == ProfileRouteState.incomplete) {
+  if (profileState == ProfileRouteState.error) return null;
+  if (profileState == ProfileRouteState.missing) {
     return matchedLocation == '/onboarding' ? null : '/onboarding';
   }
-  if (loggingIn || matchedLocation == '/onboarding') return '/home';
+  if (matchedLocation == '/offline' && userRole == UserRole.provider) {
+    return '/home';
+  }
 
   return null;
 }
@@ -98,6 +101,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         matchedLocation: state.matchedLocation,
         authState: authRouteState,
         profileState: profileRouteState,
+        userRole: profile.value?.role,
       );
     },
     routes: [
@@ -110,6 +114,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/forgot-password',
         builder: (context, state) => const ForgotPasswordView(),
+      ),
+      GoRoute(
+        path: '/verify-email',
+        builder: (context, state) => const EmailVerificationView(),
+      ),
+      GoRoute(
+        path: '/verify-phone',
+        builder: (context, state) => const PhoneVerificationView(),
       ),
       GoRoute(
         path: '/onboarding',

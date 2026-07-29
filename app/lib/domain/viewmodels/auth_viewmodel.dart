@@ -75,7 +75,6 @@ class UserViewModel extends Notifier<AsyncValue<void>> {
   Future<void> saveProfile({
     required UserModel user,
     required String name,
-    required String phone,
     required List<String> categories,
     double? latitude,
     double? longitude,
@@ -93,7 +92,6 @@ class UserViewModel extends Notifier<AsyncValue<void>> {
 
       final update = ProfileUpdate(
         name: name.trim(),
-        phone: phone.trim(),
         serviceCategories: categories,
         latitude: latitude,
         longitude: longitude,

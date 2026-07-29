@@ -6,7 +6,6 @@ void main() {
   test('ProfileUpdate solo serializa campos editables', () {
     const update = ProfileUpdate(
       name: '  Prestador  ',
-      phone: ' 3000000000 ',
       serviceCategories: ['Plomería'],
       photoUrl: 'https://example.com/avatar.jpg',
       latitude: 4.71,
@@ -16,7 +15,8 @@ void main() {
     final data = update.toFirestore();
 
     expect(data['name'], 'Prestador');
-    expect(data['phone'], '3000000000');
+    expect(data, isNot(contains('phone')));
+    expect(data, isNot(contains('phoneVerifiedAt')));
     expect(data['profileComplete'], isTrue);
     expect(data, isNot(contains('role')));
     expect(data, isNot(contains('rating')));

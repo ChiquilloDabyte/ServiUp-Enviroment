@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:serviup/config/app_router.dart';
+import 'package:serviup/models/enums/user_role.dart';
 
 void main() {
   group('resolveAppRedirect', () {
@@ -23,27 +24,27 @@ void main() {
       expect(redirect, '/onboarding');
     });
 
-    test('envía a onboarding cuando el perfil está incompleto', () {
+    test('permite explorar cuando el perfil está incompleto', () {
       final redirect = resolveAppRedirect(
         matchedLocation: '/home',
         authState: AuthRouteState.signedIn,
         profileState: ProfileRouteState.incomplete,
       );
 
-      expect(redirect, '/onboarding');
+      expect(redirect, isNull);
     });
 
-    test('sale de onboarding cuando llega el perfil completo', () {
+    test('onboarding controla su propia salida al completarse', () {
       final redirect = resolveAppRedirect(
         matchedLocation: '/onboarding',
         authState: AuthRouteState.signedIn,
         profileState: ProfileRouteState.complete,
       );
 
-      expect(redirect, '/home');
+      expect(redirect, isNull);
     });
 
-    test('tras el login espera el perfil y luego entra al home', () {
+    test('login controla la navegación después de autenticar', () {
       final whileLoading = resolveAppRedirect(
         matchedLocation: '/login',
         authState: AuthRouteState.signedIn,
@@ -56,7 +57,29 @@ void main() {
       );
 
       expect(whileLoading, isNull);
-      expect(whenComplete, '/home');
+      expect(whenComplete, isNull);
+    });
+
+    test('impide que un prestador abra el directorio offline', () {
+      final redirect = resolveAppRedirect(
+        matchedLocation: '/offline',
+        authState: AuthRouteState.signedIn,
+        profileState: ProfileRouteState.complete,
+        userRole: UserRole.provider,
+      );
+
+      expect(redirect, '/home');
+    });
+
+    test('permite que un cliente abra el directorio offline', () {
+      final redirect = resolveAppRedirect(
+        matchedLocation: '/offline',
+        authState: AuthRouteState.signedIn,
+        profileState: ProfileRouteState.complete,
+        userRole: UserRole.client,
+      );
+
+      expect(redirect, isNull);
     });
   });
 }

@@ -14,7 +14,7 @@ enum UserRole {
   }
 
   String get label => switch (this) {
-        UserRole.client => 'Cliente',
-        UserRole.provider => 'Prestador',
-      };
+    UserRole.client => 'Cliente',
+    UserRole.provider => 'Prestador',
+  };
 }

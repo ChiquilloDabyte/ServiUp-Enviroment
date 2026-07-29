@@ -25,6 +25,7 @@ import '../../data/services/places_service.dart';
 import '../../data/services/storage_service.dart';
 import '../../data/services/sync_service.dart';
 import '../../models/user_model.dart';
+import '../../models/account_verification_state.dart';
 
 final authServiceProvider = Provider<AuthService>((ref) => AuthService());
 final firestoreServiceProvider = Provider<FirestoreService>(
@@ -163,6 +164,23 @@ final currentUserProfileProvider = StreamProvider<UserModel?>((ref) {
   final authState = ref.watch(authStateProvider).value;
   if (authState == null) return const Stream.empty();
   return ref.watch(userRepositoryProvider).watchUser(authState.uid);
+});
+
+final accountVerificationProvider = Provider<AccountVerificationState>((ref) {
+  final authUser = ref.watch(authStateProvider).value;
+  final profile = ref.watch(currentUserProfileProvider).value;
+  final authPhone = authUser?.phoneNumber;
+  final phoneVerified =
+      profile?.phoneVerifiedAt != null &&
+      authPhone != null &&
+      profile?.phone == authPhone;
+
+  return AccountVerificationState(
+    role: profile?.role,
+    profileComplete: profile?.profileComplete ?? false,
+    emailVerified: authUser?.emailVerified ?? false,
+    phoneVerified: phoneVerified,
+  );
 });
 
 final fcmTokenRefreshProvider = Provider<void>((ref) {

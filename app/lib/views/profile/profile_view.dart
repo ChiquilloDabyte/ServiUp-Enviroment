@@ -7,6 +7,7 @@ import '../../domain/providers/app_providers.dart';
 import '../../domain/viewmodels/auth_viewmodel.dart';
 import '../../models/enums/user_role.dart';
 import '../../models/user_model.dart';
+import '../../widgets/account_requirements_card.dart';
 import '../../widgets/loading_view.dart';
 import '../../widgets/responsive_content.dart';
 import '../../widgets/section_card.dart';
@@ -42,6 +43,7 @@ class _ProfileContent extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
     final colors = Theme.of(context).colorScheme;
+    final verification = ref.watch(accountVerificationProvider);
 
     return ResponsiveContent(
       maxWidth: 720,
@@ -80,6 +82,10 @@ class _ProfileContent extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.md),
+          if (verification.accountRequirements.isNotEmpty) ...[
+            const AccountRequirementsCard(),
+            const SizedBox(height: AppSpacing.gutter),
+          ],
           SectionCard(
             child: Column(
               children: [
@@ -87,13 +93,28 @@ class _ProfileContent extends ConsumerWidget {
                   icon: Icons.email_outlined,
                   label: 'Correo',
                   value: user.email,
+                  trailing:
+                      verification.emailVerified
+                          ? const Icon(Icons.verified_outlined)
+                          : null,
                 ),
-                const Divider(height: AppSpacing.md),
-                _ProfileField(
-                  icon: Icons.phone_outlined,
-                  label: 'Teléfono',
-                  value: user.phone,
-                ),
+                if (user.role == UserRole.provider) ...[
+                  const Divider(height: AppSpacing.md),
+                  _ProfileField(
+                    icon: Icons.phone_outlined,
+                    label: 'Celular',
+                    value:
+                        verification.phoneVerified
+                            ? user.phone
+                            : 'Sin verificar',
+                    trailing: TextButton(
+                      onPressed: () => context.push('/verify-phone'),
+                      child: Text(
+                        verification.phoneVerified ? 'Cambiar' : 'Verificar',
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -164,11 +185,13 @@ class _ProfileField extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.value,
+    this.trailing,
   });
 
   final IconData icon;
   final String label;
   final String value;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -185,6 +208,7 @@ class _ProfileField extends StatelessWidget {
             ],
           ),
         ),
+        if (trailing != null) trailing!,
       ],
     );
   }

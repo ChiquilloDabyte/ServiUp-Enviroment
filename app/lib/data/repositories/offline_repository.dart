@@ -5,7 +5,7 @@ import '../services/local_db_service.dart';
 
 class OfflineRepository {
   OfflineRepository({required LocalDbService localDbService})
-      : _localDbService = localDbService;
+    : _localDbService = localDbService;
 
   final LocalDbService _localDbService;
 

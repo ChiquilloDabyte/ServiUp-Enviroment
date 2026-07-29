@@ -1,5 +1,5 @@
 TÉRMINOS Y CONDICIONES DE SERVIUP
-Última actualización: 27 de julio de 2026
+Última actualización: 28 de julio de 2026
 
 1. OBJETO DEL SERVICIO
 
@@ -7,7 +7,7 @@ ServiUp es una plataforma tecnológica que permite a clientes publicar solicitud
 
 2. CUENTAS
 
-Para usar las funciones principales debes crear una cuenta con correo electrónico y contraseña, elegir un rol y completar información básica de perfil. Debes suministrar datos correctos, mantener segura tu contraseña y notificarnos si detectas un uso no autorizado.
+Para usar las funciones principales debes crear una cuenta con correo electrónico y contraseña, elegir un rol y completar información básica de perfil. Puedes explorar antes de terminar estos pasos, pero el cliente debe completar su perfil y verificar el correo para publicar. El prestador debe además verificar por SMS un celular colombiano antes de enviar propuestas o aparecer en el directorio.
 
 ServiUp no ofrece actualmente inicio de sesión mediante redes sociales ni realiza verificación documental de identidad. Los usuarios deben verificar por sus propios medios la identidad, experiencia y condiciones de la contraparte antes de contratar.
 
@@ -21,7 +21,7 @@ Cuando el prestador indique que terminó, el cliente podrá confirmar la finaliz
 
 4. UBICACIÓN Y CONTACTO
 
-Mientras una solicitud está abierta, los prestadores reciben una ubicación aproximada. La dirección exacta se reserva para el cliente y el prestador seleccionado. El directorio offline puede conservar localmente el nombre, teléfono y categorías de prestadores con perfil completo para permitir contacto cuando no haya conexión.
+Mientras una solicitud está abierta, los prestadores reciben una ubicación aproximada. La dirección exacta se reserva para el cliente y el prestador seleccionado. El directorio offline puede conservar localmente el nombre, teléfono y categorías de prestadores con perfil completo y teléfono verificado para permitir contacto cuando no haya conexión.
 
 5. CHAT Y CONTENIDO
 

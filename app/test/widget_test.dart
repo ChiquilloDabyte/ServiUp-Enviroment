@@ -8,9 +8,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.lightTheme,
-        home: const Scaffold(
-          body: Center(child: Text(AppConstants.appName)),
-        ),
+        home: const Scaffold(body: Center(child: Text(AppConstants.appName))),
       ),
     );
 

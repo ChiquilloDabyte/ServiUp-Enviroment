@@ -57,8 +57,8 @@ class UserRepository {
     required UserRole role,
     required ProfileUpdate update,
   }) async {
-    if (update.name.trim().isEmpty || update.phone.trim().isEmpty) {
-      throw const RepositoryException('Nombre y teléfono son obligatorios.');
+    if (update.name.trim().isEmpty) {
+      throw const RepositoryException('El nombre es obligatorio.');
     }
     if (role == UserRole.provider && update.serviceCategories.isEmpty) {
       throw const RepositoryException(
